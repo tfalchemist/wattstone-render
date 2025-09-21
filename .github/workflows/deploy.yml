@@ -1,49 +1,125 @@
-name: Deploy Serverless
+name: Deploy Wattstone PDF Service
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main ]          # -> deploy nach "dev"
+    tags:     [ 'v*' ]          # -> deploy nach "prod"
   workflow_dispatch:
     inputs:
       stage:
-        description: "Stage (dev|prod)"
-        required: true
-        default: "prod"
+        description: 'Stage to deploy (dev|prod)'
+        required: false
+        default: dev
+      region:
+        description: 'AWS region'
+        required: false
+        default: eu-central-1
 
 jobs:
-  deploy:
+  deploy-dev:
+    name: Deploy (dev)
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.stage == 'dev')
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: Wattstone-PDF
-    env:
-      AWS_REGION: eu-central-1
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: Wattstone-PDF/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('Wattstone-PDF/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
       - name: Install Serverless & deps
         run: |
           npm i -g serverless@3
-          npm ci || npm i
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm i
+          fi
 
-      - name: Configure AWS creds
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region:            ${{ env.AWS_REGION }}
+          aws-region:            ${{ github.event.inputs.region || 'eu-central-1' }}
 
-      - name: Deploy DEV on push to main
-        if: github.event_name == 'push'
+      - name: Deploy
+        env:
+          STAGE:  ${{ github.event.inputs.stage || 'dev' }}
+          REGION: ${{ github.event.inputs.region || 'eu-central-1' }}
         run: |
-          sls deploy --stage dev --region $AWS_REGION
+          npx serverless deploy --stage $STAGE --region $REGION
 
-      - name: Deploy to chosen STAGE (manual)
-        if: github.event_name == 'workflow_dispatch'
+      - name: Show endpoints
+        env:
+          STAGE:  ${{ github.event.inputs.stage || 'dev' }}
+          REGION: ${{ github.event.inputs.region || 'eu-central-1' }}
         run: |
-          sls deploy --stage ${{ github.event.inputs.stage }} --region $AWS_REGION
+          npx serverless info --stage $STAGE --region $REGION
+
+  deploy-prod:
+    name: Deploy (prod)
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.stage == 'prod')
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Wattstone-PDF
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: Wattstone-PDF/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('Wattstone-PDF/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install Serverless & deps
+        run: |
+          npm i -g serverless@3
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm i
+          fi
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ github.event.inputs.region || 'eu-central-1' }}
+
+      - name: Deploy (prod)
+        env:
+          STAGE:  ${{ github.event.inputs.stage || 'prod' }}
+          REGION: ${{ github.event.inputs.region || 'eu-central-1' }}
+        run: |
+          npx serverless deploy --stage $STAGE --region $REGION
+
+      - name: Show endpoints
+        env:
+          STAGE:  ${{ github.event.inputs.stage || 'prod' }}
+          REGION: ${{ github.event.inputs.region || 'eu-central-1' }}
+        run: |
+          npx serverless info --stage $STAGE --region $REGION
