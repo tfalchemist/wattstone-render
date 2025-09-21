@@ -11,13 +11,13 @@ provider:
     cors: true
 
   environment:
-    BREVO_DISABLED:    ${ssm:/wattstone/${sls:stage}/BREVO_DISABLED}
-    BREVO_KEY:         ${ssm:/wattstone/${sls:stage}/BREVO_KEY~true}   # <— SecureString
-    MAIL_FROM_EMAIL:   ${ssm:/wattstone/${sls:stage}/MAIL_FROM_EMAIL}
-    MAIL_FROM_NAME:    ${ssm:/wattstone/${sls:stage}/MAIL_FROM_NAME}
-    MAIL_DELIVERY_MODE:${ssm:/wattstone/${sls:stage}/MAIL_DELIVERY_MODE}
-    CDN_LOGO:          ${ssm:/wattstone/${sls:stage}/CDN_LOGO}
-    STAGE:             ${sls:stage}
+    BREVO_DISABLED:     "${ssm:/wattstone/${sls:stage}/BREVO_DISABLED}"
+    BREVO_KEY:          "${ssm:/wattstone/${sls:stage}/BREVO_KEY~true}"   # SecureString (entschlüsselt)
+    MAIL_FROM_EMAIL:    "${ssm:/wattstone/${sls:stage}/MAIL_FROM_EMAIL}"
+    MAIL_FROM_NAME:     "${ssm:/wattstone/${sls:stage}/MAIL_FROM_NAME}"
+    MAIL_DELIVERY_MODE: "${ssm:/wattstone/${sls:stage}/MAIL_DELIVERY_MODE}"
+    CDN_LOGO:           "${ssm:/wattstone/${sls:stage}/CDN_LOGO}"
+    STAGE:              "${sls:stage}"
 
   iam:
     role:
@@ -43,3 +43,12 @@ functions:
       - httpApi:
           path: /health
           method: get
+
+
+package:
+  patterns:
+    - src/**
+    - node_modules/**
+    - '!**/*.map'
+    - '!tests/**'
+    - '!README.md'
