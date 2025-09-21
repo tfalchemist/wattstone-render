@@ -15,25 +15,15 @@ provider:
   timeout: 25
   logRetentionInDays: 14
 
-  # SSM-Parameter (mit Default-Fallbacks für den Fall, dass was fehlt)
+  # vorerst OHNE SSM, nur Defaults
   environment:
-    BREVO_DISABLED:   ${ssm:/wattstone/${sls:stage}/BREVO_DISABLED, 'true'}
-    BREVO_KEY:        ${ssm:/wattstone/${sls:stage}/BREVO_KEY~true, ''}
-    MAIL_FROM_EMAIL:  ${ssm:/wattstone/${sls:stage}/MAIL_FROM_EMAIL, 'noreply@example.com'}
-    MAIL_FROM_NAME:   ${ssm:/wattstone/${sls:stage}/MAIL_FROM_NAME, 'Wattstone Reports'}
-    MAIL_DELIVERY_MODE: ${ssm:/wattstone/${sls:stage}/MAIL_DELIVERY_MODE, 'attachment'}
-    CDN_LOGO:         ${ssm:/wattstone/${sls:stage}/CDN_LOGO, 'https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Logo.png?v=1755872570'}
-    STAGE:            ${sls:stage}
-
-  iam:
-    role:
-      statements:
-        - Effect: Allow
-          Action:
-            - ssm:GetParameter
-            - ssm:GetParameters
-          Resource:
-            - arn:aws:ssm:${self:provider.region}:*:parameter/wattstone/${sls:stage}/*
+    BREVO_DISABLED: 'true'
+    BREVO_KEY: ''
+    MAIL_FROM_EMAIL: 'noreply@example.com'
+    MAIL_FROM_NAME: 'Wattstone Reports'
+    MAIL_DELIVERY_MODE: 'attachment'
+    CDN_LOGO: 'https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Logo.png?v=1755872570'
+    STAGE: ${sls:stage}
 
 package:
   patterns:
@@ -45,7 +35,7 @@ package:
     - '!.serverless/**'
 
 functions:
-  # nutzt die lokale Datei health.js (im Projektroot) und deren export "handler"
+  # nutzt deine vorhandene health.js im Projektroot
   health:
     handler: health.handler
     events:
