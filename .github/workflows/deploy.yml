@@ -1,0 +1,49 @@
+name: Deploy Serverless
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: "Stage (dev|prod)"
+        required: true
+        default: "prod"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Wattstone-PDF
+    env:
+      AWS_REGION: eu-central-1
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Serverless & deps
+        run: |
+          npm i -g serverless@3
+          npm ci || npm i
+
+      - name: Configure AWS creds
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ env.AWS_REGION }}
+
+      - name: Deploy DEV on push to main
+        if: github.event_name == 'push'
+        run: |
+          sls deploy --stage dev --region $AWS_REGION
+
+      - name: Deploy to chosen STAGE (manual)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          sls deploy --stage ${{ github.event.inputs.stage }} --region $AWS_REGION
