@@ -1,40 +1,48 @@
 service: wattstone-report-api
-frameworkVersion: '3'
+frameworkVersion: "3"
 
 provider:
   name: aws
   runtime: nodejs20.x
   architecture: arm64
-  region: eu-central-1
-  stage: dev
+  region: ${env:AWS_REGION, 'eu-central-1'}
+  stage: ${sls:stage}
   memorySize: 1024
   timeout: 25
   logRetentionInDays: 14
-  provider:
   environment:
-    STAGE: "${sls:stage}"
-    BREVO_DISABLED:     "${ssm:/wattstone/${sls:stage}/BREVO_DISABLED}"
-    BREVO_KEY:          "${ssm:/wattstone/${sls:stage}/BREVO_KEY~true}"
-    MAIL_FROM_EMAIL:    "${ssm:/wattstone/${sls:stage}/MAIL_FROM_EMAIL}"
-    MAIL_FROM_NAME:     "${ssm:/wattstone/${sls:stage}/MAIL_FROM_NAME}"
-    MAIL_DELIVERY_MODE: "${ssm:/wattstone/${sls:stage}/MAIL_DELIVERY_MODE}"
-    CDN_LOGO:           "${ssm:/wattstone/${sls:stage}/CDN_LOGO}"
+    STAGE: ${sls:stage}
+    PARAM_PATH_BASE: "/wattstone/${sls:stage}"   # <- nur der Basispfad
+    # optionale Fallbacks (werden von Code überschrieben, falls SSM vorhanden)
+    BREVO_DISABLED: "true"
+    MAIL_FROM_EMAIL: "noreply@example.com"
+    MAIL_FROM_NAME: "Wattstone Reports"
+    MAIL_DELIVERY_MODE: "attachment"
+    CDN_LOGO: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Logo.png?v=1755872570"
 
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - ssm:GetParameter
+            - ssm:GetParameters
+          Resource:
+            - "arn:aws:ssm:${aws:region}:${aws:accountId}:parameter/wattstone/${sls:stage}/*"
 
 package:
   patterns:
-    - '**/*'
-    - '!node_modules/.bin/**'
-    - '!**/*.map'
-    - '!tests/**'
-    - '!.git/**'
-    - '!.serverless/**'
-    # Wichtig: TS rausnehmen, damit nur der einfache Health-Handler deployt wird
-    - '!src/**'
-    # Optional: package.json ausschließen, dann kann nichts "type":"module" triggern
-    - '!package.json'
-    # health.cjs explizit sicherstellen
-    - 'health.cjs'
+    - "**/*"
+    - "!node_modules/.bin/**"
+    - "!**/*.map"
+    - "!tests/**"
+    - "!.git/**"
+    - "!.serverless/**"
+    - "!src/**"
+    - "!package.json"
+    - "!health.js"   # <— wichtig
+    - "health.cjs"   # <— explizit rein
+
 
 functions:
   health:

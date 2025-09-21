@@ -1,17 +1,14 @@
-// CommonJS – funktioniert immer mit Lambda
-module.exports.handler = async () => {
-  console.log('health handler invoked (CJS)');
+// health.cjs
+module.exports.handler = async (event) => {
+  console.log("health invoked", { env: process.env.STAGE, now: new Date().toISOString(), eventVersion: event?.version });
   return {
     statusCode: 200,
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json; charset=utf-8' },
     body: JSON.stringify({
       ok: true,
       ts: new Date().toISOString(),
-      stage: process.env.STAGE || 'dev',
-      env: {
-        BREVO_DISABLED: process.env.BREVO_DISABLED,
-        MAIL_FROM_EMAIL: process.env.MAIL_FROM_EMAIL
-      }
+      stage: process.env.STAGE || 'n/a',
+      note: 'minimal health OK'
     })
   };
 };
