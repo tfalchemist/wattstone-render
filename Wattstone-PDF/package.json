@@ -1,12 +1,11 @@
 ﻿{
   "name": "wattstone-pdf-mail",
   "version": "0.1.0",
+  "type": "commonjs",
   "private": true,
+  "dependencies": {},
+  "devDependencies": {},
   "scripts": {
-    "build": "echo \"(optional)\"",
-    "test": "echo \"(none)\""
-  },
-  "devDependencies": {
-    "serverless": "^3.40.0"
+    "deploy:dev": "serverless deploy --stage dev --region eu-central-1"
   }
 }
