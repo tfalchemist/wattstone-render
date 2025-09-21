@@ -25,13 +25,7 @@ jobs:
           npm i -g serverless@3
           npm i
 
-      # Falls du noch KEIN OIDC-Role-Setup hast, nimm Keys aus Repo-Secrets:
-      # - name: Configure AWS Credentials
-      #   uses: aws-actions/configure-aws-credentials@v4
-      #   with:
-      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     aws-region: eu-central-1
+      
 
       - name: Serverless deploy (dev)
         run: npx serverless deploy --stage dev --region eu-central-1
