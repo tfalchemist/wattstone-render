@@ -1,0 +1,72 @@
+service: wattstone-report-api
+frameworkVersion: '3'
+
+plugins:
+  - serverless-offline # optional fürs lokale Testen (entfernen, wenn nicht benötigt)
+
+custom:
+  stage: ${opt:stage, 'dev'}                  # sls deploy --stage dev|prod
+  region: ${opt:region, 'eu-central-1'}      # Standard: eu-central-1 (Frankfurt)
+  ssmBase: "/wattstone/${self:custom.stage}" # Prefix für SSM-Parameter
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  architecture: arm64                         # etwas günstiger/schneller
+  region: ${self:custom.region}
+  stage: ${self:custom.stage}
+  logRetentionInDays: 14
+  timeout: 60                                 # genügend Luft für PDF-Render
+  memorySize: 1536                            # später ggf. 2048, falls Playwright
+  environment:
+    # Stage-aware: holt Werte aus dem SSM Parameter Store
+    BREVO_DISABLED: ${ssm:${self:custom.ssmBase}/BREVO_DISABLED, 'true'}
+    BREVO_KEY: ${ssm:${self:custom.ssmBase}/BREVO_KEY, ''}
+    MAIL_FROM_EMAIL: ${ssm:${self:custom.ssmBase}/MAIL_FROM_EMAIL, 'noreply@example.com'}
+    MAIL_FROM_NAME: ${ssm:${self:custom.ssmBase}/MAIL_FROM_NAME, 'Wattstone Reports'}
+    MAIL_DELIVERY_MODE: ${ssm:${self:custom.ssmBase}/MAIL_DELIVERY_MODE, 'attachment'}
+    CDN_LOGO: ${ssm:${self:custom.ssmBase}/CDN_LOGO, ''}
+
+  iam:
+    role:
+      statements:
+        # Lambda darf SSM-Parameter lesen
+        - Effect: Allow
+          Action:
+            - ssm:GetParameter
+            - ssm:GetParameters
+          Resource:
+            - arn:aws:ssm:${self:custom.region}:*:parameter${self:custom.ssmBase}/*
+
+        # Falls du später Download-Links statt Anhang versendest (S3):
+        # - Effect: Allow
+        #   Action:
+        #     - s3:PutObject
+        #     - s3:GetObject
+        #   Resource:
+        #     - arn:aws:s3:::your-report-bucket/*
+
+package:
+  patterns:
+    - 'src/**'
+    - 'node_modules/**'
+    - '!**/*.map'
+    - '!tests/**'
+    - '!README.md'
+
+functions:
+  # HTTP POST /reports — nimmt JSON entgegen, rendert PDF, verschickt Mail
+  render:
+    handler: src/handlers/render.handler
+    events:
+      - httpApi:
+          path: /reports
+          method: post
+
+  # optional: Healthcheck
+  health:
+    handler: src/handlers/health.handler
+    events:
+      - httpApi:
+          path: /health
+          method: get

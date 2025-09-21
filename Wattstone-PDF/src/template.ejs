@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <style><%= css %></style>
+</head>
+<body>
+<div id="pdf-report" class="report-root">
+  <div class="report-logo"><img src="<%= logoUrl %>" alt="Logo"/></div>
+  <h2 class="report-title">Bewertung der Windsoglasten und Haftreibung</h2>
+  <div class="report-date"><%= dateStr %></div>
+
+  <!-- Input-Parameter Tabelle -->
+  <table class="report-table input">
+    <thead><tr><th colspan="2">Input-Parameter</th></tr></thead>
+    <tbody>
+      <tr><td>Wattstone</td><td><%= stoneLabel %></td></tr>
+      <tr><td>Windleitblech</td><td><%= deflector ? 'Ja':'Nein' %></td></tr>
+      <tr><td>Ausrichtung PV-Module</td><td><%= orientationLabel %></td></tr>
+      <tr><td>Dachhöhe z [m]</td><td><%= fmt(height,1) %></td></tr>
+      <tr><td>Windlastzone</td><td>Zone <%= windZone %></td></tr>
+      <tr><td>Geländekategorie</td><td><%= terrainLabel %></td></tr>
+      <tr><td>Fläche pro PV-Modul [m²]</td><td><%= fmt(area,2) %></td></tr>
+      <tr><td>Gewicht pro Modul [kg]</td><td><%= fmt(moduleWeight,0) %></td></tr>
+      <tr><td>Kombinierte Ballastierung [kg]</td><td><%= fmt(combBallast,1) %></td></tr>
+      <tr><td>Dachhaut</td><td><%= roofLabel %></td></tr>
+    </tbody>
+  </table>
+
+  <!-- Output-Parameter -->
+  <table class="report-table output">
+    <thead><tr><th colspan="2">Output-Parameter</th></tr></thead>
+    <tbody>
+      <tr><td>Vb;0 [m/s]</td><td><%= fmt(vb0,2) %></td></tr>
+      <tr><td>qp;50 Jahre [N/m²]</td><td><%= fmt(qp50,1) %></td></tr>
+      <tr><td>qp; Referenz [N/m²]</td><td><%= qpRef==null?'–':fmt(qpRef,1) %></td></tr>
+    </tbody>
+  </table>
+
+  <!-- Gruppen -->
+  <table class="report-table output">
+    <thead>
+      <tr><th>Testgruppe</th><th>Gesamtgewicht [kg]</th><th>+Beschwerung [kg]</th></tr>
+    </thead>
+    <tbody>
+      <% groups.forEach(g => { %>
+        <tr>
+          <td>G<%= g.group %></td>
+          <td><%= g.jTotal %></td>
+          <td class="<%= g.kExtra<0 ? 'k-neg' : 'k-pos' %>"><%= g.kExtra %></td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+
+  <!-- Botschaft -->
+  <% if (allNegative) { %>
+    <p><strong>Ergebnis:</strong> Ballastierung ausreichend dimensioniert.</p>
+  <% } else { %>
+    <p><strong>Hinweis:</strong> Max. zusätzliche Beschwerung pro Modul: <%= maxPositiveK %> kg.</p>
+  <% } %>
+</div>
+</body>
+</html>
