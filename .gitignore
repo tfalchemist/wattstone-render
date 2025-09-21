@@ -4,3 +4,4 @@ dist/
 coverage/
 .DS_Store
 Wattstone-PDF/health.js
+Wattstone-PDF/.serverless/
