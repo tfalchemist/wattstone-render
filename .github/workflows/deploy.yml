@@ -25,7 +25,5 @@ jobs:
           npm i -g serverless@3
           npm i
 
-      
-
       - name: Serverless deploy (dev)
         run: npx serverless deploy --stage dev --region eu-central-1
