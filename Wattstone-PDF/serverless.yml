@@ -5,21 +5,13 @@ provider:
   name: aws
   runtime: nodejs20.x
   architecture: arm64
-  region: ${env:AWS_REGION, 'eu-central-1'}
-  stage: ${sls:stage}
+  region: eu-central-1
+  stage: ${env:STAGE, 'dev'}
   memorySize: 1024
   timeout: 25
   logRetentionInDays: 14
   environment:
     STAGE: ${sls:stage}
-    PARAM_PATH_BASE: "/wattstone/${sls:stage}"   # <- nur der Basispfad
-    # optionale Fallbacks (werden von Code überschrieben, falls SSM vorhanden)
-    BREVO_DISABLED: "true"
-    MAIL_FROM_EMAIL: "noreply@example.com"
-    MAIL_FROM_NAME: "Wattstone Reports"
-    MAIL_DELIVERY_MODE: "attachment"
-    CDN_LOGO: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Logo.png?v=1755872570"
-
   iam:
     role:
       statements:
@@ -28,20 +20,22 @@ provider:
             - ssm:GetParameter
             - ssm:GetParameters
           Resource:
-            - "arn:aws:ssm:${aws:region}:${aws:accountId}:parameter/wattstone/${sls:stage}/*"
+            # Account-Wildcard vermeidet Auflösung von ${aws:accountId}
+            - arn:aws:ssm:${aws:region}:*:parameter/wattstone/${sls:stage}/*
 
 package:
   patterns:
-    - "**/*"
-    - "!node_modules/.bin/**"
-    - "!**/*.map"
-    - "!tests/**"
-    - "!.git/**"
-    - "!.serverless/**"
-    - "!src/**"
-    - "!package.json"
-    - "!health.js"   # <— wichtig
-    - "health.cjs"   # <— explizit rein
+    - '**/*'
+    - '!node_modules/.bin/**'
+    - '!**/*.map'
+    - '!tests/**'
+    - '!.git/**'
+    - '!.serverless/**'
+    - '!src/**'       # lassen wir drin, damit keine TS/ESM-Dateien stören
+    - '!package.json' # wie bei health
+    - health.cjs
+    - reports.cjs     # <— hinzufügen
+
 
 
 functions:
@@ -51,12 +45,9 @@ functions:
       - httpApi:
           path: /health
           method: get
-    name: ${self:service}-${sls:stage}-health
-
   reports:
-    handler: reports.handler
+    handler: reports.handler       # <— auf reports.cjs zeigen
     events:
       - httpApi:
           path: /reports
           method: post
-    name: ${self:service}-${sls:stage}-reports
