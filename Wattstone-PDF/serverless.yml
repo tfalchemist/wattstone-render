@@ -51,11 +51,12 @@ functions:
       - httpApi:
           path: /health
           method: get
+    name: ${self:service}-${sls:stage}-health
 
   reports:
     handler: reports.handler
-    timeout: 25
     events:
       - httpApi:
           path: /reports
           method: post
+    name: ${self:service}-${sls:stage}-reports

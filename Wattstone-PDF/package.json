@@ -1,10 +1,11 @@
-﻿{
+{
   "name": "wattstone-pdf-mail",
   "version": "0.1.0",
   "type": "commonjs",
   "private": true,
-  "dependencies": {},
-  "devDependencies": {},
+  "dependencies": {
+    "@aws-sdk/client-ssm": "^3.893.0"
+  },
   "scripts": {
     "deploy:dev": "serverless deploy --stage dev --region eu-central-1"
   }
