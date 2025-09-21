@@ -1,24 +1,29 @@
+service: wattstone-report-api
+frameworkVersion: '3'
+
+custom:
+  stage: ${opt:stage, 'dev'}
+  region: ${opt:region, 'eu-central-1'}
+
 provider:
   name: aws
   runtime: nodejs20.x
   architecture: arm64
-  region: ${opt:region, 'eu-central-1'}
-  stage: ${opt:stage, 'dev'}
+  region: ${self:custom.region}
+  stage: ${self:custom.stage}
+  memorySize: 1024
+  timeout: 25
   logRetentionInDays: 14
-  timeout: 29
-  memorySize: 1536
-  httpApi:
-    cors: true
 
+  # SSM-Parameter (mit Default-Fallbacks für den Fall, dass was fehlt)
   environment:
-    BREVO_DISABLED:     "${ssm:/wattstone/${sls:stage}/BREVO_DISABLED}"
-    BREVO_KEY:          "${ssm:/wattstone/${sls:stage}/BREVO_KEY~true}"
-    MAIL_FROM_EMAIL:    "${ssm:/wattstone/${sls:stage}/MAIL_FROM_EMAIL}"
-    MAIL_FROM_NAME:     "${ssm:/wattstone/${sls:stage}/MAIL_FROM_NAME}"
-    MAIL_DELIVERY_MODE: "${ssm:/wattstone/${sls:stage}/MAIL_DELIVERY_MODE}"
-    CDN_LOGO:           "${ssm:/wattstone/${sls:stage}/CDN_LOGO}"
-    STAGE:              "${sls:stage}"
-
+    BREVO_DISABLED:   ${ssm:/wattstone/${sls:stage}/BREVO_DISABLED, 'true'}
+    BREVO_KEY:        ${ssm:/wattstone/${sls:stage}/BREVO_KEY~true, ''}
+    MAIL_FROM_EMAIL:  ${ssm:/wattstone/${sls:stage}/MAIL_FROM_EMAIL, 'noreply@example.com'}
+    MAIL_FROM_NAME:   ${ssm:/wattstone/${sls:stage}/MAIL_FROM_NAME, 'Wattstone Reports'}
+    MAIL_DELIVERY_MODE: ${ssm:/wattstone/${sls:stage}/MAIL_DELIVERY_MODE, 'attachment'}
+    CDN_LOGO:         ${ssm:/wattstone/${sls:stage}/CDN_LOGO, 'https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Logo.png?v=1755872570'}
+    STAGE:            ${sls:stage}
 
   iam:
     role:
@@ -28,28 +33,22 @@ provider:
             - ssm:GetParameter
             - ssm:GetParameters
           Resource:
-            - arn:aws:ssm:${opt:region, 'eu-central-1'}:*:parameter/wattstone/${sls:stage}/*
+            - arn:aws:ssm:${self:provider.region}:*:parameter/wattstone/${sls:stage}/*
+
+package:
+  patterns:
+    - '**/*'
+    - '!node_modules/.bin/**'
+    - '!**/*.map'
+    - '!tests/**'
+    - '!.git/**'
+    - '!.serverless/**'
 
 functions:
-  render:
-    handler: src/handlers/render.handler
-    events:
-      - httpApi:
-          path: /reports
-          method: post
-
+  # nutzt die lokale Datei health.js (im Projektroot) und deren export "handler"
   health:
-    handler: src/handlers/health.handler
+    handler: health.handler
     events:
       - httpApi:
           path: /health
           method: get
-
-
-package:
-  patterns:
-    - src/**
-    - node_modules/**
-    - '!**/*.map'
-    - '!tests/**'
-    - '!README.md'
