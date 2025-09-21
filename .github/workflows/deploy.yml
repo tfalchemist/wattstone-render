@@ -3,44 +3,35 @@ name: Deploy (dev)
 on:
   push:
     branches: [ main ]
-
-env:
-  AWS_REGION: eu-central-1
+  workflow_dispatch:
 
 jobs:
-  deploy:
+  deploy-dev:
     runs-on: ubuntu-latest
-
-    # <<< WICHTIG: Ab hier laufen alle "run:"-Steps automatisch in Wattstone-PDF/
     defaults:
       run:
-        working-directory: Wattstone-PDF
-
+        working-directory: Wattstone-PDF   # <<< run all steps in this folder
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
 
       - name: Install Serverless & deps
         run: |
           npm i -g serverless@3
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm i
-          fi
+          npm i
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region:            ${{ env.AWS_REGION }}
+      # OPTIONAL: set AWS creds if you already stored them as repo secrets
+      # - name: Configure AWS Credentials
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: eu-central-1
 
-      - name: Deploy to AWS
-        run: |
-          npx serverless deploy --stage dev --region $AWS_REGION
+      - name: Serverless deploy (dev)
+        run: npx serverless deploy --stage dev --region eu-central-1
