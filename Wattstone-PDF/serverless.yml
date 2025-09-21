@@ -41,3 +41,12 @@ functions:
       - httpApi:
           path: /health
           method: get
+
+
+  reports:
+    handler: reports.handler
+    timeout: 25
+    events:
+      - httpApi:
+          path: /reports
+          method: post
