@@ -1,11 +1,3 @@
-service: wattstone-report-api
-frameworkVersion: '3'
-
-custom:
-  stage: ${opt:stage, 'dev'}
-  region: ${opt:region, 'eu-central-1'}
-  ssmBase: /wattstone/${self:custom.stage}
-
 provider:
   name: aws
   runtime: nodejs20.x
@@ -17,14 +9,16 @@ provider:
   memorySize: 1536
   httpApi:
     cors: true
+
   environment:
-    BREVO_DISABLED:   ${ssm:/wattstone/${sls:stage}/BREVO_DISABLED}
-    BREVO_KEY:        ${ssmSecure:/wattstone/${sls:stage}/BREVO_KEY}
-    MAIL_FROM_EMAIL:  ${ssm:/wattstone/${sls:stage}/MAIL_FROM_EMAIL}
-    MAIL_FROM_NAME:   ${ssm:/wattstone/${sls:stage}/MAIL_FROM_NAME}
-    MAIL_DELIVERY_MODE: ${ssm:/wattstone/${sls:stage}/MAIL_DELIVERY_MODE}
-    CDN_LOGO:         ${ssm:/wattstone/${sls:stage}/CDN_LOGO}
-    STAGE:            ${sls:stage}
+    BREVO_DISABLED:    ${ssm:/wattstone/${sls:stage}/BREVO_DISABLED}
+    BREVO_KEY:         ${ssm:/wattstone/${sls:stage}/BREVO_KEY~true}   # <— SecureString
+    MAIL_FROM_EMAIL:   ${ssm:/wattstone/${sls:stage}/MAIL_FROM_EMAIL}
+    MAIL_FROM_NAME:    ${ssm:/wattstone/${sls:stage}/MAIL_FROM_NAME}
+    MAIL_DELIVERY_MODE:${ssm:/wattstone/${sls:stage}/MAIL_DELIVERY_MODE}
+    CDN_LOGO:          ${ssm:/wattstone/${sls:stage}/CDN_LOGO}
+    STAGE:             ${sls:stage}
+
   iam:
     role:
       statements:
@@ -35,16 +29,6 @@ provider:
           Resource:
             - arn:aws:ssm:${opt:region, 'eu-central-1'}:*:parameter/wattstone/${sls:stage}/*
 
-
-package:
-  patterns:
-    - src/**
-    - node_modules/**
-    - '!**/*.map'
-    - '!tests/**'
-    - '!README.md'
-  artifactsS3KeyDirname: serverless/${self:service}/${self:custom.stage}/code-artifacts
-
 functions:
   render:
     handler: src/handlers/render.handler
@@ -52,6 +36,7 @@ functions:
       - httpApi:
           path: /reports
           method: post
+
   health:
     handler: src/handlers/health.handler
     events:
