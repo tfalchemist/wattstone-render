@@ -5,6 +5,7 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+# Für OIDC nötig – wir nutzen aber Secrets, schadet aber nicht:
 permissions:
   id-token: write
   contents: read
@@ -30,6 +31,7 @@ jobs:
           npm i -g serverless@3
           npm i
 
+      # >>> Credentials MÜSSEN VOR serverless konfiguriert sein
       - name: Configure AWS credentials (access keys)
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -37,24 +39,21 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-central-1
 
-      - name: Who am I? (debug)
+      # Debug: zeigen, unter welcher Identität wir laufen
+      - name: Who am I?
         run: aws sts get-caller-identity
 
+      # Export für serverless.yml (falls wir später env-Interpolation brauchen)
       - name: Export AWS_ACCOUNT_ID and AWS_REGION
         run: |
           echo "AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)" >> $GITHUB_ENV
           echo "AWS_REGION=eu-central-1" >> $GITHUB_ENV
 
+      # Debug: Variablen + serverless print
       - name: Debug env & sls print
-        env:
-          AWS_REGION: ${{ env.AWS_REGION }}
-          AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
         run: |
-          env | sort | grep -E 'AWS_ACCOUNT_ID|AWS_REGION|STAGE' || true
+          env | sort | grep -E 'AWS_ACCOUNT_ID|AWS_REGION|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY' || true
           npx serverless print --stage dev --region eu-central-1
 
       - name: Serverless deploy (dev)
-        env:
-          AWS_REGION: ${{ env.AWS_REGION }}
-          AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
         run: npx serverless deploy --stage dev --region eu-central-1

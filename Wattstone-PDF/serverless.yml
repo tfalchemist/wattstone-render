@@ -16,15 +16,6 @@ provider:
   logRetentionInDays: 14
   environment:
     STAGE: ${self:custom.stage}
-  iam:
-    role:
-      statements:
-        - Effect: Allow
-          Action:
-            - ssm:GetParameter
-            - ssm:GetParameters
-          Resource: "*"
-            
 
 package:
   patterns:
@@ -34,8 +25,8 @@ package:
     - '!tests/**'
     - '!.git/**'
     - '!.serverless/**'
-    - '!src/**'       # keine TS/ESM-Dateien bundlen
-    - '!package.json' # wie bei health
+    - '!src/**'
+    - '!package.json'
     - health.cjs
     - reports.cjs
 
