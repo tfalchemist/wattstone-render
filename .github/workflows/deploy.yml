@@ -30,8 +30,7 @@ jobs:
           npm i -g serverless@3
           npm i
 
-      # *** WICHTIG: Diese Stufe MUSS aktiv sein (NICHT auskommentieren) ***
-      - name: Configure AWS credentials (Access Keys)
+      - name: Configure AWS credentials (access keys)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -41,11 +40,21 @@ jobs:
       - name: Who am I? (debug)
         run: aws sts get-caller-identity
 
-      # AccountId als ENV für Serverless bereitstellen (vermeidet ${aws:...} Resolver)
-      - name: Export AWS_ACCOUNT_ID
-        run: echo "AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)" >> $GITHUB_ENV
+      - name: Export AWS_ACCOUNT_ID and AWS_REGION
+        run: |
+          echo "AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)" >> $GITHUB_ENV
+          echo "AWS_REGION=eu-central-1" >> $GITHUB_ENV
+
+      - name: Debug env & sls print
+        env:
+          AWS_REGION: ${{ env.AWS_REGION }}
+          AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
+        run: |
+          env | sort | grep -E 'AWS_ACCOUNT_ID|AWS_REGION|STAGE' || true
+          npx serverless print --stage dev --region eu-central-1
 
       - name: Serverless deploy (dev)
         env:
-          AWS_REGION: eu-central-1
+          AWS_REGION: ${{ env.AWS_REGION }}
+          AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
         run: npx serverless deploy --stage dev --region eu-central-1

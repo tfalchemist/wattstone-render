@@ -1,15 +1,7 @@
 service: wattstone-report-api
 frameworkVersion: "3"
 
-provider:
-  name: aws
-  runtime: nodejs20.x
-  architecture: arm64
-  region: eu-central-1
-  stage: ${env:STAGE, 'dev'}
-  memorySize: 1024
-  timeout: 25
-  logRetentionInDays: 14
+pprovider:
   environment:
     STAGE: ${sls:stage}
   iam:
@@ -19,7 +11,8 @@ provider:
           Action:
             - ssm:GetParameter
             - ssm:GetParameters
-          Resource: "*"
+          Resource:
+            - arn:aws:ssm:${env:AWS_REGION}:${env:AWS_ACCOUNT_ID}:parameter/wattstone/${self:custom.stage}/*
             
 package:
   patterns:
