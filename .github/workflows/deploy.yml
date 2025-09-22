@@ -1,4 +1,4 @@
-﻿name: Deploy (dev)
+name: Deploy (dev)
 
 on:
   push:
@@ -30,6 +30,7 @@ jobs:
           npm i -g serverless@3
           npm i
 
+      # Variante A: mit Access Keys aus Secrets (du hast die beiden ja schon angelegt)
       - name: Configure AWS credentials (access keys)
         uses: aws-actions/configure-aws-credentials@v4
         with:
