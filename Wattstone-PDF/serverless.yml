@@ -23,8 +23,8 @@ provider:
           Action:
             - ssm:GetParameter
             - ssm:GetParameters
-          Resource:
-            - arn:aws:ssm:${env:AWS_REGION}:${env:AWS_ACCOUNT_ID}:parameter/wattstone/${self:custom.stage}/*
+          Resource: "*"
+            
 
 package:
   patterns:
