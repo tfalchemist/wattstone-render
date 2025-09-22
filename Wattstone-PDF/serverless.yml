@@ -20,8 +20,7 @@ provider:
             - ssm:GetParameter
             - ssm:GetParameters
           Resource:
-            # Account-Wildcard vermeidet Auflösung von ${aws:accountId}
-            - arn:aws:ssm:${aws:region}:*:parameter/wattstone/${sls:stage}/*
+            - arn:aws:ssm:${aws:region}:${env:AWS_ACCOUNT_ID}:parameter/wattstone/${self:custom.stage}/*
 
 package:
   patterns:

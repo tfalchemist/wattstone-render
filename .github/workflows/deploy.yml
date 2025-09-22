@@ -5,6 +5,10 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   deploy-dev:
     runs-on: ubuntu-latest
@@ -26,13 +30,22 @@ jobs:
           npm i -g serverless@3
           npm i
 
-      # >>> HIER kommen die AWS-Creds aus den Repo-Secrets zum Einsatz <<<
-      - name: Configure AWS credentials
+      # *** WICHTIG: Diese Stufe MUSS aktiv sein (NICHT auskommentieren) ***
+      - name: Configure AWS credentials (Access Keys)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: eu-central-1
 
+      - name: Who am I? (debug)
+        run: aws sts get-caller-identity
+
+      # AccountId als ENV für Serverless bereitstellen (vermeidet ${aws:...} Resolver)
+      - name: Export AWS_ACCOUNT_ID
+        run: echo "AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)" >> $GITHUB_ENV
+
       - name: Serverless deploy (dev)
+        env:
+          AWS_REGION: eu-central-1
         run: npx serverless deploy --stage dev --region eu-central-1
