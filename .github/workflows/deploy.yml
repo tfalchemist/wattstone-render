@@ -42,12 +42,12 @@ jobs:
 
       - name: Export AWS_ACCOUNT_ID and AWS_REGION
         run: |
-          echo "AWS_ACCOUNT_ID=432120272715" >> 
-          echo "AWS_REGION=eu-central-1" >> 
+          echo "AWS_ACCOUNT_ID=432120272715" >> \
+          echo "AWS_REGION=eu-central-1" >> \
 
       - name: Debug env & sls print
         run: |
-          env | sort | grep -E 'AWS_ACCOUNT_ID|AWS_REGION|AWS_ACCESS_KEY_ID' || true
+          env | sort | grep -E 'AWS_ACCOUNT_ID|AWS_REGION' || true
           npx serverless print --stage dev --region eu-central-1
 
       - name: Serverless deploy (dev)
