@@ -1,9 +1,21 @@
 service: wattstone-report-api
 frameworkVersion: "3"
 
-pprovider:
+custom:
+  stage: ${sls:stage}
+  region: ${env:AWS_REGION, 'eu-central-1'}
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  architecture: arm64
+  region: ${self:custom.region}
+  stage: ${self:custom.stage}
+  memorySize: 1024
+  timeout: 25
+  logRetentionInDays: 14
   environment:
-    STAGE: ${sls:stage}
+    STAGE: ${self:custom.stage}
   iam:
     role:
       statements:
@@ -13,7 +25,7 @@ pprovider:
             - ssm:GetParameters
           Resource:
             - arn:aws:ssm:${env:AWS_REGION}:${env:AWS_ACCOUNT_ID}:parameter/wattstone/${self:custom.stage}/*
-            
+
 package:
   patterns:
     - '**/*'
@@ -22,12 +34,10 @@ package:
     - '!tests/**'
     - '!.git/**'
     - '!.serverless/**'
-    - '!src/**'       # lassen wir drin, damit keine TS/ESM-Dateien stören
+    - '!src/**'       # keine TS/ESM-Dateien bundlen
     - '!package.json' # wie bei health
     - health.cjs
-    - reports.cjs     # <— hinzufügen
-
-
+    - reports.cjs
 
 functions:
   health:
@@ -36,8 +46,9 @@ functions:
       - httpApi:
           path: /health
           method: get
+
   reports:
-    handler: reports.handler       # <— auf reports.cjs zeigen
+    handler: reports.handler
     events:
       - httpApi:
           path: /reports
