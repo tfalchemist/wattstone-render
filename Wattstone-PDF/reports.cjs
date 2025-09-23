@@ -1,36 +1,43 @@
-// Wattstone-PDF/reports.cjs
-// Echo-Stub im CommonJS-Format (kein import, kein aws-sdk nötig)
-module.exports.handler = async (event) => {
-  let body = {};
-  try {
-    // HTTP API sendet den Body als String
-    body = event && event.body ? JSON.parse(event.body) : {};
-  } catch (e) {
-    return {
-      statusCode: 400,
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ ok: false, error: "Invalid JSON body", detail: String(e) }),
-    };
-  }
+const { getWattstone } = require('./ssm.cjs');
 
-  const env = process.env || {};
-  const mail = {
-    from: env.MAIL_FROM_EMAIL || "",
-    delivery: env.MAIL_DELIVERY_MODE || "",
-    brevoDisabled: (env.BREVO_DISABLED || "").toString(),
-    brevoKeyPresent: !!(env.BREVO_KEY && env.BREVO_KEY.length > 0),
-  };
+exports.handler = async (event) => {
+  const stage = process.env.STAGE || 'dev';
+  const body = parse(event?.body);
+
+  // Konfig mit Fallbacks: ENV → SSM → Defaults
+  const [brevoDisabled, brevoKey, fromEmail, fromName, delivery, cdnLogo] =
+    await Promise.all([
+      pick('BREVO_DISABLED', stage, false),
+      pick('BREVO_KEY', stage, true),
+      pick('MAIL_FROM_EMAIL', stage, false),
+      pick('MAIL_FROM_NAME', stage, false),
+      pick('MAIL_DELIVERY_MODE', stage, false),
+      pick('CDN_LOGO', stage, false),
+    ]);
 
   return {
-    statusCode: 200,
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      ok: true,
-      note: "Echo-Stub (CJS) – Rendering/Mail folgt als Nächstes",
-      stage: env.STAGE || "dev",
-      mail,
-      cdnLogo: env.CDN_LOGO || "",
-      received: body,
-    }),
+    ok: true,
+    note: 'Echo-Stub (CJS) – Rendering/Mail folgt im nächsten Schritt',
+    stage,
+    mail: {
+      from: fromEmail || '',
+      fromName: fromName || '',
+      delivery: delivery || 'attachment',
+      brevoDisabled: toBool(brevoDisabled ?? 'true'),
+      brevoKeyPresent: !!(brevoKey && brevoKey.length > 3),
+    },
+    cdnLogo: cdnLogo || '',
+    received: body || {},
   };
 };
+
+function parse(s) { try { return JSON.parse(s || '{}'); } catch { return {}; } }
+function toBool(v) { return String(v).toLowerCase() === 'true'; }
+
+async function pick(key, stage, decrypt) {
+  // 1) ENV
+  if (process.env[key]) return process.env[key];
+  // 2) SSM
+  try { return await getWattstone(stage, key, { decrypt }); }
+  catch { return undefined; }
+}

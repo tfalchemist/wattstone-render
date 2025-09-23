@@ -1,21 +1,29 @@
 service: wattstone-report-api
 frameworkVersion: "3"
 
-custom:
-  stage: ${sls:stage}
-  region: ${env:AWS_REGION, 'eu-central-1'}
-
 provider:
   name: aws
   runtime: nodejs20.x
   architecture: arm64
-  region: ${self:custom.region}
-  stage: ${self:custom.stage}
+  region: eu-central-1
+  stage: dev
   memorySize: 1024
   timeout: 25
   logRetentionInDays: 14
   environment:
-    STAGE: ${self:custom.stage}
+    STAGE: ${sls:stage}
+    # Nur Dev-Defaults; echte Werte holen die Handler aus SSM:
+    BREVO_DISABLED: "true"
+    MAIL_DELIVERY_MODE: "attachment"
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - ssm:GetParameter
+            - ssm:GetParameters
+          # DEV: weit offen; später auf euren Account+Pfad einschränken
+          Resource: "*"
 
 package:
   patterns:
@@ -26,9 +34,10 @@ package:
     - '!.git/**'
     - '!.serverless/**'
     - '!src/**'
-    - '!package.json'
+    - '!package.json'  # keep cjs simple
     - health.cjs
     - reports.cjs
+    - ssm.cjs
 
 functions:
   health:

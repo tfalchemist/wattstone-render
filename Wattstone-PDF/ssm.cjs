@@ -1,15 +1,26 @@
-// Kleiner Helper: liest SSM (mit SecureString-Support) und liefert Defaults
-import { SSMClient, GetParameterCommand } from "@aws-sdk/client-ssm";
+// CommonJS + AWS SDK v3
+const { SSMClient, GetParameterCommand } = require('@aws-sdk/client-ssm');
 
-const ssm = new SSMClient({ region: process.env.AWS_REGION || "eu-central-1" });
+const client = new SSMClient({}); // Region kommt aus Lambda-Env
+const cache = new Map();
 
-export async function readSSM(path, { decrypt=false, fallback="" }={}) {
-  try {
-    const { Parameter } = await ssm.send(new GetParameterCommand({
-      Name: path, WithDecryption: decrypt
-    }));
-    return Parameter?.Value ?? fallback;
-  } catch {
-    return fallback;
-  }
+async function getParam(name, { decrypt = false } = {}) {
+  const key = `${name}|${decrypt}`;
+  if (cache.has(key)) return cache.get(key);
+
+  const cmd = new GetParameterCommand({
+    Name: name,
+    WithDecryption: !!decrypt,
+  });
+  const resp = await client.send(cmd);
+  const val = resp?.Parameter?.Value ?? '';
+  cache.set(key, val);
+  return val;
 }
+
+async function getWattstone(stage, key, { decrypt = false } = {}) {
+  const path = `/wattstone/${stage}/${key}`;
+  return getParam(path, { decrypt });
+}
+
+module.exports = { getParam, getWattstone };
