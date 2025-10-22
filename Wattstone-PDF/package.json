@@ -1,12 +1,22 @@
 {
-  "name": "wattstone-pdf-mail",
+  "name": "wattstone-report-api",
   "version": "0.1.0",
-  "type": "commonjs",
   "private": true,
-  "dependencies": {
-    "@aws-sdk/client-ssm": "^3.893.0"
-  },
+  "type": "commonjs",
+  "description": "Lambda: Reports (PDF) + Health",
+  "main": "reports.cjs",
+  "engines": { "node": ">=20" },
   "scripts": {
-    "deploy:dev": "serverless deploy --stage dev --region eu-central-1"
+    "build:web": "esbuild calc.cjs --bundle --format=iife --global-name=Calc --outfile=public/calc.browser.js",
+    "test:calc": "node calc.test.cjs",
+    "lint": "echo \"No linter configured\""
+  },
+  "dependencies": {
+    "pdf-lib": "^1.17.1",
+    "@aws-sdk/client-ssm": "^3.637.0",
+    "axios": "^1.7.9"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
   }
 }

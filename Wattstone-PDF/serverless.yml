@@ -8,22 +8,20 @@ provider:
   region: eu-central-1
   stage: dev
   memorySize: 1024
-  timeout: 25
+  timeout: 25                 # HTTP API darf max. 30s – daher 25s
   logRetentionInDays: 14
   environment:
     STAGE: ${sls:stage}
-    # Nur Dev-Defaults; echte Werte holen die Handler aus SSM:
-    BREVO_DISABLED: "true"
+    BREVO_DISABLED: "true"    # Dev-Default; echte Werte kommen aus SSM
     MAIL_DELIVERY_MODE: "attachment"
-  iam:
-    role:
-      statements:
-        - Effect: Allow
-          Action:
-            - ssm:GetParameter
-            - ssm:GetParameters
-          # DEV: weit offen; später auf euren Account+Pfad einschränken
-          Resource: "*"
+
+  # WICHTIG: klassische, stabile Syntax benutzen
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - ssm:GetParameter
+        - ssm:GetParameters
+      Resource: "*"           # später gerne einschränken
 
 package:
   patterns:
@@ -34,14 +32,24 @@ package:
     - '!.git/**'
     - '!.serverless/**'
     - '!src/**'
-    - '!package.json'  # keep cjs simple
+    - '!package.json'
     - health.cjs
     - reports.cjs
     - ssm.cjs
+    - render.cjs
+    - mail.cjs
+    - calc.cjs
+    - data.cjs
+    # optional: doppelte/alte Daten hart ausschließen
+    - '!data copy.cjs'
+    - '!data.universal.js'
+
+
 
 functions:
   health:
     handler: health.handler
+    timeout: 10
     events:
       - httpApi:
           path: /health
@@ -49,6 +57,7 @@ functions:
 
   reports:
     handler: reports.handler
+    timeout: 25
     events:
       - httpApi:
           path: /reports

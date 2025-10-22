@@ -1,0 +1,1947 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Windlastberechnung</title>
+<style>
+  :root {
+    --bg: #f7f7f7;
+    --card: #fff;
+    --muted: #7d7d7d;
+    --text: #222;
+    --accent: #ffe24d;
+    --border: #e5e7eb;
+    --shadow: 0 2px 12px rgba(0,0,0,0.07);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  header {
+    padding: 32px 0 16px 0;
+    background: #fff;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+  }
+  header h1 {
+    margin: 0 0 6px 0;
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+  header p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 1rem;
+  }
+  .wrap {
+    max-width: 900px;
+    margin: 32px auto;
+    padding: 0 16px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 28px 24px;
+    box-shadow: var(--shadow);
+  }
+  .card h2 {
+    font-size: 1.2rem;
+    margin: 0 0 0px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 18px 18px;
+  }
+  label {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 7px;
+    font-weight: 500;
+    display: block;
+  }
+  input, select {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: #fafbfc;
+    color: var(--text);
+    font-size: 1rem;
+    transition: border 0.2s;
+  }
+  input:focus, select:focus {
+    border-color: var(--accent);
+    outline: none;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    font-size: 15px;
+  }
+  th {
+    background: #fafbfc;
+    color: var(--text);
+    font-weight: 600;
+    text-align: left;
+  }
+  .muted { color: var(--muted); font-size: 13px; }
+  .tight td, .tight th { white-space: nowrap; }
+  .k-neg { background: #e6f7e6 !important; color: #1a7f1a; font-weight: bold; }
+  .k-pos { background: #ffeaea !important; color: #c00; font-weight: bold; }
+  #pdf-report, #pdf-report * {
+    color: #000 !important;
+    border-color: #000 !important;
+  }
+  #pdf-report th {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  #pdf-report table {
+    width: 100%;
+    max-width: 180mm;
+    table-layout: fixed;
+  }
+  #pdf-report th, #pdf-report td {
+    word-break: break-word;
+  }
+  .pagebreak { page-break-after: always; }
+  button, #pdfBtn {
+    background: var(--accent);
+    color: #000000;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 28px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 16px;
+    box-shadow: 0 2px 8px rgba(255,122,0,0.08);
+    transition: background 0.2s;
+  }
+  button:hover, #pdfBtn:hover {
+    background: #ffe24d;
+    
+  }
+  .fade { opacity: 0; transition: opacity .6s ease-in-out; }
+  .fade.show { opacity: 1; }
+  #img1 img, #img2 img, #img3 img {
+  display: block;           /* sorgt dafür, dass margin wirkt */
+  margin: 0 auto;           /* mittig auf der Seite */
+  max-width: 600px;         /* maximale Breite (kannst du ändern) */
+  width: 100%;              /* passt sich bis max-width an */
+  height: auto;             /* behält Seitenverhältnis */
+}
+#img1 img {
+  max-width: 600px;   /* z. B. voll breit */
+}
+#img2 img,
+#img3 img {
+  max-width: 600px;   /* etwas kleiner */
+}
+
+#pdf-report .pdf-logo { margin: 0 0 0px 0 !important; }
+#pdf-report h2        { margin-top: 0 !important; }
+
+ /* Für zentrierte, skalierende Bilder auf der Seite */
+  #img1 img, #img2 img, #img3 img {
+    display:block; margin:16px auto; max-width:600px; width:100%; height:auto; border:1px solid #000;
+  }
+
+    .report-root { font-family: Arial, sans-serif; color:#111; }
+  .report-logo { text-align:center; margin:2pt 0 0pt;}
+  .report-logo img { max-width:140px; width:100%; height:auto; opacity:.95; }
+  .report-title { font-size:18pt; font-weight:700; text-align:center; margin:2pt 0 2pt; }
+  .report-date { font-size:10pt; text-align:center; margin:2pt 0 10pt; }
+
+  .report-h1 { font-size:12pt; font-weight:700; margin:10pt 0 6pt; }
+  .report-p  { font-size:10pt; line-height:1.35; margin:6pt 0; }
+
+  /* Tabellen */
+  .report-table { width:100%; border-collapse:collapse; font-size:9.5pt; table-layout: fixed; }
+  .report-table th, .report-table td { border:1px solid #777; padding:4pt 6pt; vertical-align:top; word-wrap:break-word; }
+  .report-table thead th { background:#f2f2f2; font-weight:700; }
+  /* Input: auch Zellen fett */
+  .report-table.input td, .report-table.input th { font-weight:700; }
+  /* Output: nur Köpfe fett */
+  .report-table.output td { font-weight:400; }
+
+  /* 5 Abbildungen als Gitter (2 Spalten, die fünfte bricht um) */
+  .fig-grid { display:grid; grid-template-columns:1fr 1fr; gap:8pt; }
+  .fig { border:1px solid #999; padding:6pt; text-align:center; }
+  .fig img { max-width:100%; height:auto; }
+  .fig-cap { font-size:8.5pt; color:#333; margin-top:4pt; }
+
+  /* Dummy-Bilder (falls kein echter Container vorhanden ist) */
+  .dummy-img { width:100%; height:160px; background:repeating-linear-gradient(45deg,#eee,#eee 10px,#ddd 10px,#ddd 20px);
+               display:flex; align-items:center; justify-content:center; color:#888; font-size:10pt; border:1px solid #bbb; }
+
+  /* Button-Container */
+  .pdf-actions { text-align:center; margin:16px 0; }
+  
+  /* Pagebreaks im PDF komplett deaktivieren */
+  .pagebreak { page-break-after: always; display: block !important; }
+
+  /* (Nur falls ein Dummy-Bild fällt) */
+  .dummy-img {
+    width: 100%;
+    height: 160px;
+    background: repeating-linear-gradient(45deg,#eee,#eee 10px,#ddd 10px,#ddd 20px);
+    display:flex; align-items:center; justify-content:center;
+    color:#888; font-size:10pt; border:1px solid #bbb;
+
+  }
+
+
+.report-root { font-family: Arial, sans-serif; color:#111; }
+.report-logo { text-align:center; margin:8pt 0 6pt; }
+.report-logo img { max-width:140px; width:100%; height:auto; opacity:.95; }
+.report-title { font-size:18pt; font-weight:700; text-align:center; margin:2pt 0 2pt; }
+.report-date { font-size:10pt; text-align:center; margin:2pt 0 10pt; }
+.report-h1 { font-size:12pt; font-weight:700; margin:10pt 0 6pt; }
+.report-p  { font-size:10pt; line-height:1.35; margin:6pt 0; }
+.report-table { width:100%; border-collapse:collapse; font-size:9.5pt; table-layout: fixed; }
+.report-table th, .report-table td { border:1px solid #777; padding:4pt 6pt; vertical-align:top; word-wrap:break-word; }
+.report-table thead th { background:#f2f2f2; font-weight:700; }
+.report-table.input td, .report-table.input th { font-weight:700; }
+.report-table.output td { font-weight:400; }
+.fig-grid { display:grid; grid-template-columns:1fr 1fr; gap:8pt; }
+.fig { border:1px solid #999; padding:6pt; text-align:center; }
+.fig img { max-width:100%; height:auto; }
+.fig-cap { font-size:8.5pt; color:#333; margin-top:4pt; }
+.dummy-img { width:100%; height:160px; background:repeating-linear-gradient(45deg,#eee,#eee 10px,#ddd 10px,#ddd 20px);
+             display:flex; align-items:center; justify-content:center; color:#888; font-size:10pt; border:1px solid #bbb; }
+.pdf-actions { text-align:center; margin:16px 0; }
+.pagebreak { page-break-after: always; display: block !important; }
+
+#pdf-report.pdf-hidden { display: none !important; }
+#pdf-report.pdf-visible { display: block !important; background: #fff; }
+
+
+/* PDF-Layout optimieren */
+#pdf-report, #pdf-report * {
+  color: #000 !important;
+  background: #fff !important;
+  border-color: #000 !important;
+  box-shadow: none !important;
+  font-family: Arial, sans-serif !important;
+}
+#pdf-report {
+  max-width: 180mm !important;
+  margin: 0 auto !important;
+  padding: 12mm 10mm 12mm 10mm !important;
+  font-size: 11pt !important;
+}
+#pdf-report table {
+  width: 100% !important;
+  max-width: 180mm !important;
+  font-size: 10pt !important;
+  table-layout: fixed !important;
+}
+#pdf-report th, #pdf-report td {
+  padding: 4pt 6pt !important;
+  word-break: break-word !important;
+}
+
+/* Selbst überschriebene Stylz*/
+h2 {
+    font-size: 1.2rem;
+    margin: 0 0 0px;
+    font-weight: 600;
+    color: var(--text);
+}
+#pdf-report table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 10pt;       /* fixierte Schriftgröße */
+  line-height: 1.3;      /* sauberes Zeilenbild */
+  margin: 12px 0;        /* Abstand nach oben/unten */
+}
+
+#pdf-report th,
+#pdf-report td {
+  border: 1px solid #000;
+  padding: 2pt 4pt;      /* definierte Zellenabstände */
+  font-size: 10pt;       /* gleiche Schrift wie table */
+  line-height: 1.3;
+  vertical-align: top;
+  word-break: break-word;
+}
+
+#pdf-report thead th {
+  background: #fff;      /* Hintergrund neutralisieren */
+  font-weight: 700;      /* nur Kopf fett */
+}
+
+.pagebreak { page-break-after: always !important; }
+
+#pdf-report #pdf-dyntext, 
+#pdf-report #pdf-dyntext p, 
+#pdf-report #pdf-dyntext table, 
+#pdf-report #pdf-dyntext td, 
+#pdf-report #pdf-dyntext th {
+  line-height: 1.1 !important;
+}
+
+.site-fig { text-align:center; margin:16px 0; }
+.site-fig img { max-width:100%; height:auto; border:1px solid var(--border); }
+.site-cap { font-size:12px; color:var(--muted); margin-top:6px; }
+
+.site-fig-grid {
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap:16px;
+}
+@media (max-width: 900px){
+  .site-fig-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+@media (max-width: 600px){
+  .site-fig-grid { grid-template-columns: 1fr; }
+}
+#pdf-report h2 { margin-top: 2px !important; }
+/* Shopify-Overrides nur im PDF-Block */
+#pdf-report #pdf-logo-img {
+  display: block !important;
+  margin: 0 auto 6px !important;   /* kleiner Abstand unter dem Logo */
+}
+
+#pdf-report h2 {
+  margin: 2px 0 8px !important;    /* sehr kleiner Abstand nach oben */
+  line-height: 1.25 !important;     /* kompaktere Zeilenhöhe */
+}
+
+/* Trigger-Button */
+.tip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 6px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: help;
+  line-height: 1;
+}
+
+/* Bubble */
+.tip-bubble {
+  position: absolute;
+  left: 50%;
+  bottom: 125%;
+  transform: translateX(-50%) translateY(6px);
+  min-width: 220px;
+  max-width: 320px;
+  background: #111;
+  color: #fff !important;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.35;
+  box-shadow: 0 6px 18px rgba(0,0,0,.18);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .15s ease, transform .15s ease;
+  z-index: 1000;
+  white-space: normal;
+}
+
+/* Pfeil */
+.tip-bubble::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #111;
+}
+
+/* Anzeigen bei Hover/Focus oder wenn offen getoggelt */
+.tip:hover .tip-bubble,
+.tip:focus .tip-bubble,
+.tip:focus-visible .tip-bubble,
+.tip.is-open .tip-bubble {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+input::placeholder {
+  color: #9ca3af !important;   /* ein helles Grau oder deine Wunschfarbe */
+  opacity: 1 !important;
+}
+</style>
+</head>
+<body>
+
+
+
+<div class="wrap">
+  
+      <div id="pdf-report" class="pdf-hidden" style="font-family: Arial, sans-serif;">
+        
+   <!-- Bild  Abb. 5: Untersuchung Haftreibungskoeffizienten  -->
+  <div style="text-align:center; margin: 0px 0;">
+  <img id="pdf-logo-img"
+       src="https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calc_wattstone_logo_original_transparent.png?v=1756130565"
+       alt="Logo"
+       style="max-width:100%;height:auto;border:0px solid #ffffff;">
+
+</div>
+  <h2>Bewertung der Windsoglasten und Haftreibung</h2>
+  <div id="pdf-datum"></div>
+<div id="pdf-project" style="margin:2px 0 2px 0;">
+  <div style="font-weight:700; margin-bottom:4px;">Projektdaten</div>
+  <div style="font-size:10pt; line-height:1.25;">
+    <div id="pdf-name"></div>
+    <div id="pdf-street"></div>
+    <div><span id="pdf-plz"></span> <span id="pdf-ort"></span></div>
+  </div>
+</div>
+  <div id="pdf-dyntext">
+  
+  <p>Die Beurteilung stützt sich auf Windkanaluntersuchungen in der atmosphärischen Grenzschicht, die gemäß <strong>DIN EN 1991-1-4:2021</strong> durchgeführt wurden. Ergänzend erfolgte die Berechnung mithilfe des zertifizierten Berechnungstools <strong>W15611-2E-RA-003</strong> der Firma <strong>Peutz Engineering</strong> vom 24. Juni 2024. Diese Kombination aus experimenteller Untersuchung und rechnerischer Analyse bildet die verlässliche Grundlage für die ermittelten Ergebnisse.</p>
+</div>
+
+  
+  
+  <table border="1" cellpadding="2" cellspacing="0" style="border-collapse:collapse;">
+    <thead>
+      <tr><th colspan="2">Input-Parameter</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Wattstone [Grad]</td><td id="pdf-wattstone"></td></tr>
+      <tr><td>Windleitblech</td><td id="pdf-deflector"></td></tr>
+      <tr><td>Ausrichtung PV-Module</td><td id="pdf-orient"></td></tr>
+      <tr><td>Dachhöhe z [m]</td><td id="pdf-z"></td></tr>
+      <tr><td>Länge der kleinsten Gebäudefront d1 [m]</td><td id="pdf-d1"></td></tr>
+      <tr><td>Windlastzone</td><td id="pdf-windzone"></td></tr>
+      <tr><td>Geländekategorie</td><td id="pdf-terrain"></td></tr>
+      <tr><td>Bezugszeitraum [Jahre]</td><td id="pdf-period"></td></tr>
+      <tr><td>Sicherheitsfaktor Yf:q</td><td id="pdf-yfq"></td></tr>
+      <tr><td>Belastungsfaktor Yg</td><td id="pdf-yg"></td></tr>
+      <tr><td>Fläche pro PV-Modul [m²]</td><td id="pdf-area"></td></tr>
+      <tr><td>Gewicht pro Modul [kg]</td><td id="pdf-modw"></td></tr>
+      <tr><td>Kombinierte Ballastierung pro Modul [kg]</td><td id="pdf-ballast"></td></tr>
+      <tr><td>Dachhaut</td><td id="pdf-rooftype"></td></tr>
+      <tr><td>Haftreibungskoeffizient μ</td><td id="pdf-roofmu"></td></tr>
+    </tbody>
+  </table>
+  <br>
+  <table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;">
+    <thead>
+      <tr><th colspan="2">Output-Parameter</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Grundgeschwindigkeit Vb;0 [m/s]</td><td id="pdf-vb0"></td></tr>
+      <tr><td>Windsoglasten qp;50 Jahre [N/m²]</td><td id="pdf-qp50"></td></tr>
+      <tr><td>Windsoglasten qp; Referenzzeitraum [N/m²]</td><td id="pdf-qpref"></td></tr>
+    </tbody>
+  </table>
+
+<div class="pagebreak"></div>
+
+  <!-- Bild  Abb 1 TestGruppe G1,G2,G3,G4 -->
+  <div style="text-align:center; margin: 20px 0;">
+  <img id="pdf-main-img"
+       src="https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild1_1.png?v=1755872915"
+       alt="Testgruppen Übersicht"
+       style="max-width:100%;height:auto;border:1px solid #000;">
+  <div id="pdf-main-cap" style="font-size:12px; color:#333; margin-top:4px;">
+    Abb. 1: Testgruppen G1, G2, G3 und G4
+  </div>
+</div>
+
+<div class="pagebreak"></div>
+
+<!-- Bild  Abb. 2: Schematische Darstellung 4 Module im Ost-West-Aufbau draufsicht -->
+  <div style="text-align:center; margin: 20px 0;">
+  <img id="pdf-SchemaTop-img"
+       src="https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild2_1.png?v=1755872915"
+       alt="Schematische Darstellung Ost-West"
+       style="max-width:90%;height:auto;border:1px solid #000;">
+  <div id="pdf-SchemaTop-cap" style="font-size:12px; color:#333; margin-top:4px;">
+    Abb. 2: Schematische Darstellung 4 Module im Ost-West-Aufbau
+  </div>
+</div>
+
+<!-- Bild  Abb. 3: Schematische Seitenansicht Ost-West-Aufbau -->
+  <div style="text-align:center; margin: 20px 0;">
+  <img id="pdf-SchemaSeite-img"
+       src="https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild3_1.png?v=1755872915"
+       alt="Schematische Darstellung Ost-West"
+       style="max-width:100%;height:auto;border:1px solid #000;">
+  <div id="pdf-SchemaSeite-cap" style="font-size:12px; color:#333; margin-top:4px;">
+    Abb. 3: Schematische Seitenansicht Ost-West-Aufbau
+  </div>
+</div>
+
+
+<div class="pagebreak"></div>
+
+
+<!-- Bild Abb. 4: Versuchsaufbau Windkanaluntersuchung Wattstone u -->
+  <div style="text-align:center; margin: 20px 0;">
+  <img id="pdf-VersAufbau-img"
+       src="https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild4_1.png?v=1755872915"
+       alt="Schematische Darstellung Ost-West"
+       style="max-width:90%;height:auto;border:1px solid #000;">
+  <div id="pdf-VersAufbau-cap" style="font-size:12px; color:#333; margin-top:4px;">
+    Abb. 4: Versuchsaufbau Windkanaluntersuchung Wattstone 10G V2 Ost-West-Aufbau mit integrierten Sensoren zur Ermittlung der Windsoglasten.
+  </div>
+</div>
+
+
+
+<!-- Bild  Abb. 5: Untersuchung Haftreibungskoeffizienten  -->
+  <div style="text-align:center; margin: 20px 0;">
+  <img id="pdf-Haftrei-img"
+       src="https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Measurement_setup_of_bitumous_roofing.png?v=1756304313"
+       alt="Schematische Darstellung Ost-West"
+       style="max-width:90%;height:auto;border:1px solid #000;">
+  <div id="pdf-Haftrei-cap" style="font-size:12px; color:#333; margin-top:4px;">
+    Abb. 5: Bestimmung des Gleitreibungskoeffizienten μ (nass) zwischen Prüfkörper und schieferbesandeter Bitumenoberlage bei definierter Wasserfilmdicke.
+  </div>
+</div>
+
+<div class="pagebreak"></div>
+<!-- Bild  Abb. 5: Untersuchung Haftreibungskoeffizienten  -->
+  <div style="text-align:center; margin: 20px 0;">
+  <img id="pdf-Haftrei2-img"
+       src="https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Wet_measurement_of_bitumous_roofing_with_slate.png?v=1756304312"
+       alt="Schematische Darstellung Ost-West"
+       style="max-width:90%;height:auto;border:1px solid #000;">
+  <div id="pdf-Haftrei-cap" style="font-size:12px; color:#333; margin-top:4px;">
+    Abb. 6: Messaufbau (Testaufbau) für bituminöse Dachabdichtungen
+  </div>
+</div>
+
+<!-- Bild  Abb. 5: Untersuchung Haftreibungskoeffizienten  -->
+  <div style="text-align:center; margin: 20px 0;">
+  <img id="pdf-Haftrei3-img"
+       src="https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Investigated_roof_coverings.png?v=1756304313"
+       alt="Schematische Darstellung Ost-West"
+       style="max-width:90%;height:auto;border:1px solid #000;">
+  <div id="pdf-Haftrei-cap" style="font-size:12px; color:#333; margin-top:4px;">
+    Abb. 7: Untersuchte Dachoberflächen: glatte Bitumenoberlage, schieferbesandete Bitumenoberlage, PVC-Dachbahn, EPDM-Dachbahn sowie glatte Betonoberfläche.
+  </div>
+</div>
+
+<br>
+<div class="pagebreak"></div>
+<br>
+
+<div id="pdf-dyntext">
+  <div>
+    <b>Tabelle Beiwert für den Strömungsdruck</b> 
+  </div>
+  <table border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse; text-align:center; width:100%;">
+    <thead style="background:#f2f2f2;">
+      <tr>
+        <th rowspan="2"> </th>
+        <th colspan="2">Drag</th>
+        <th colspan="2">Lift</th>
+      </tr>
+      <tr>
+        <th>Single</th>
+        <th>Groups</th>
+        <th>Single</th>
+        <th>Groups</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Cp_min</strong></td>
+        <td><span id="drag-single-min">[Cp_min_Single_Drag]</span></td>
+        <td><span id="drag-groups-min">[Cp_min_Groups_Drag]</span></td>
+        <td><span id="lift-single-min">[Cp_min_Single_Lift]</span></td>
+        <td><span id="lift-groups-min">[Cp_min_Groups_Lift]</span></td>
+      </tr>
+      <tr>
+        <td><strong>Cp_max</strong></td>
+        <td><span id="drag-single-max">[Cp_max_Single_Drag]</span></td>
+        <td><span id="drag-groups-max">[Cp_max_Groups_Drag]</span></td>
+        <td><span id="lift-single-max">[Cp_max_Single_Lift]</span></td>
+        <td><span id="lift-groups-max">[Cp_max_Groups_Lift]</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+
+<div id="pdf-dyntext">
+  <br>
+  <p><strong>Drag (Widerstandskraft in Strömungsrichtung):</strong><br>
+  Hier geht es um die Kraft, die der Wind in seiner Hauptströmungsrichtung auf die Module ausübt.<br>
+  – Für <em>einzelne Module (Single)</em> bewegen sich die Werte zwischen 
+  <span id="drag-single-min-text"></span> und <span id="drag-single-max-text"></span>.<br>
+  – Bei <em>gekoppelten Modulen (Groups)</em> liegen die Werte zwischen 
+  <span id="drag-groups-min-text"></span> und <span id="drag-groups-max-text"></span>.
+  </p>
+
+  <p><strong>Lift (Auftriebskraft senkrecht zur Dachfläche):</strong><br>
+  Dieser Wert ist besonders wichtig, da er angibt, ob und wie stark der Wind versucht, die Module „anzuheben“.<br>
+  – Für <em>einzelne Module (Single)</em> reicht die Spanne von 
+  <span id="lift-single-min-text"></span> bis <span id="lift-single-max-text"></span>.<br>
+  – Für <em>gekoppelte Module (Groups)</em> liegen die Werte zwischen 
+  <span id="lift-groups-min-text"></span> und <span id="lift-groups-max-text"></span>.
+  </p>
+
+  
+</div>
+
+
+<br>
+<br>
+<br>
+
+<div id="pdf-dyntext">
+  <h2>Berechnung der Windlasten</h2>
+  <br>
+  <p>Für die <strong>Wattstone GmbH</strong> wurden durch das Ingenieurbüro <strong>Peutz bv</strong> umfassende Windkanalstudien durchgeführt. Ziel dieser Untersuchungen war es, die Windlasten auf das innovative PV-Panel-Trägersystem für Flachdächer aus Beton präzise zu bestimmen.</p>
+
+  <p>Die Messungen fanden in einem atmosphärischen Grenzschichtwindkanal statt und basierten auf maßstabsgetreuen Modellen. Dabei wurden sowohl nach Süden ausgerichtete Systeme als auch symmetrisch nach Ost–West orientierte Anordnungen betrachtet, bei denen die Module in Paaren gekoppelt waren. Zusätzlich wurden verschiedene Varianten und Dachkonfigurationen untersucht, um ein möglichst realistisches und umfassendes Bild der Belastungssituationen zu erhalten.</p>
+
+  <p>Ergänzend dazu hat <strong>Peutz Engineering</strong> für die <strong>Wattstone GmbH</strong> Hebetests durchgeführt. Diese dienten der Bestimmung der Kopplungseffekte zwischen benachbarten Panels innerhalb einer Reihe – in Übereinstimmung mit <strong>Anhang D.5 der Norm NEN 7250:2021</strong>.</p>
+
+  <p>Die Ergebnisse der Windkanalversuche entsprechen vollständig den getroffenen Annahmen und Erkenntnissen, wie sie im <strong>Bericht W 15611&#8209;2E&#8209;RA&#8209;001 vom&nbsp;11.&nbsp;Oktober&nbsp;2023</strong> dokumentiert sind.</p>
+
+  <p>Damit ist sichergestellt, dass die gewonnenen Erkenntnisse eine verlässliche Grundlage für Planung, Konstruktion und Anwendung des Wattstone-Systems bieten.</p>
+</div>
+
+  
+<br>
+<div class="pagebreak"></div>
+<br>
+  
+  <div>
+    <b>Auswertung: Übersicht der erforderlichen zusätzlichen Ballastierung einschließlich Yf:q gemäß der Testgruppen (Abb. 1)</b> 
+  </div>
+  <br>
+  
+  
+
+  <div><b>Testgruppen (siehe Abb. 1):</b></div>
+  <table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;">
+    <thead>
+      <tr>
+        <th>Testgruppe</th>
+        <th>Gesamtgewicht [kg]</th>
+        <th>Zusätzliche Beschwerung pro PV-Modul nötig [kg]</th>
+      </tr>
+    </thead>
+    <tbody id="pdf-tbody"></tbody>
+  </table>
+  
+  <div id="pdf-message"></div>
+  <br>
+<!--<div id="pdf-message"></div>  -->
+
+
+
+
+
+
+
+
+
+
+</div>
+
+   <!-- Hier fängt der Page Teil an  -->
+
+ 
+<section class="card">
+  <h2>Geben Sie hier Ihre Projektdaten ein</h2>
+  <div class="grid">
+     <!-- Adresse  -->
+    <div>
+  <label for="Name">
+  Name / Firma
+  <button type="button"
+          class="tip"
+          aria-describedby="tip-name"
+          aria-expanded="false">
+    <i class="fa fa-info-circle" aria-hidden="true"></i>
+    <span id="tip-name" role="tooltip" class="tip-bubble">
+      Name des Projekts, Auftraggebers oder der Firma.
+    </span>
+  </button>
+</label>
+  <input id="Name" type="text" autocomplete="organization" placeholder="z. B. Wattstone GmbH" />
+</div>
+
+<div>
+ <label for="street">
+  Straße / Nr.
+  <button type="button"
+          class="tip"
+          aria-describedby="tip-street"
+          aria-expanded="false">
+    <i class="fa fa-info-circle" aria-hidden="true"></i>
+    <span id="tip-street" role="tooltip" class="tip-bubble">
+      Straße und Hausnummer des Projektstandorts.
+    </span>
+  </button>
+</label>
+  <input id="street" type="text" autocomplete="address-line1" placeholder="z. B. Musterstraße 12" />
+</div>
+
+<div>
+<label for="plz">
+  Postleitzahl
+  <button type="button"
+          class="tip"
+          aria-describedby="tip-plz"
+          aria-expanded="false">
+    <i class="fa fa-info-circle" aria-hidden="true"></i>
+    <span id="tip-plz" role="tooltip" class="tip-bubble">
+      Fünfstellige Postleitzahl (DE). Führende Nullen sind erlaubt.
+    </span>
+  </button>
+</label>
+  <input id="plz" type="text" inputmode="numeric" pattern="[0-9]{5}" maxlength="5"
+         title="Bitte 5-stellige Postleitzahl eingeben (z. B. 01067)."
+         placeholder="z. B. 50667" />
+</div>
+
+<div>
+  <label for="Ort">
+  Ort
+  <button type="button"
+          class="tip"
+          aria-describedby="tip-ort"
+          aria-expanded="false">
+    <i class="fa fa-info-circle" aria-hidden="true"></i>
+    <span id="tip-ort" role="tooltip" class="tip-bubble">
+      Ort / Stadt des Projektstandorts.
+    </span>
+  </button>
+</label>
+  <input id="Ort" type="text" autocomplete="address-level2" placeholder="z. B. Köln" />
+</div>
+
+    <div>
+     <label for="orientation">
+  Ausrichtung
+  <button type="button"
+          class="tip"
+          aria-describedby="tip-orientation"
+          aria-expanded="false">
+    <i class="fa fa-info-circle" aria-hidden="true"></i>
+    <span id="tip-orientation" role="tooltip" class="tip-bubble">
+      Ausrichtung der PV-Anlage: Süd (Module zeigen nach Süden) oder Ost-West (Module zeigen nach Osten und Westen).
+    </span>
+  </button>
+</label>
+      <select id="orientation">
+        <option value="S">Südausrichtung</option>
+        <option value="EW" selected>Ost‑West</option>
+      </select>
+    </div>
+    <div>
+     <label for="stone">
+  Wattstone-Typ
+  <button type="button"
+          class="tip"
+          aria-describedby="tip-stone"
+          aria-expanded="false">
+    <i class="fa fa-info-circle" aria-hidden="true"></i>
+    <span id="tip-stone" role="tooltip" class="tip-bubble">
+      Wähle den Typ des Wattstone-Trägersystems entsprechend dem gewünschten Neigungswinkel und Gewicht.
+    </span>
+  </button>
+</label>
+      <select id="stone">
+        <option value="0">Wattstone 0° (43 kg)    </option>
+        <option value="6">Wattstone 6° (48 kg)    </option>
+        <option value="10V1">Wattstone 10° V1 (24 kg)</option>
+        <option value="10V2" selected>Wattstone 10° V2 (25 kg)</option>
+        <option value="10XL">Wattstone 10° XL (34 kg)</option>
+        <option value="15">Wattstone 15° (26 kg)   </option>
+      </select>
+    </div>
+    <div>
+     <label for="moduleH">
+  PV-Modulhöhe (m)
+  <button type="button"
+          class="tip"
+          aria-describedby="tip-moduleH"
+          aria-expanded="false">
+    <i class="fa fa-info-circle" aria-hidden="true"></i>
+    <span id="tip-moduleH" role="tooltip" class="tip-bubble">
+      Höhe eines einzelnen PV-Moduls in Metern. Wird für die Flächen- und Lastberechnung benötigt.
+    </span>
+  </button>
+</label>
+      <input id="moduleH" type="number" step="0.001" min="0.5" value="1.722" />
+    </div>
+    <div>
+<label for="moduleW">
+  PV-Modulbreite (m)
+  <button type="button"
+          class="tip"
+          aria-describedby="tip-moduleW"
+          aria-expanded="false">
+    <i class="fa fa-info-circle" aria-hidden="true"></i>
+    <span id="tip-moduleW" role="tooltip" class="tip-bubble">
+      Breite eines einzelnen PV-Moduls in Metern. Wird für die Flächen- und Lastberechnung benötigt.
+    </span>
+  </button>
+</label>
+      <input id="moduleW" type="number" step="0.001" min="0.5" value="1.041" />
+    </div>
+    <div>
+      <label for="moduleWeight">
+  PV-Modulgewicht (kg)
+  <button type="button"
+          class="tip"
+          aria-describedby="tip-moduleWeight"
+          aria-expanded="false">
+    <i class="fa fa-info-circle" aria-hidden="true"></i>
+    <span id="tip-moduleWeight" role="tooltip" class="tip-bubble">
+      Gewicht eines einzelnen PV-Moduls in Kilogramm. Fließt in die Ballastberechnung ein.
+    </span>
+  </button>
+</label>
+      <input id="moduleWeight" type="number" step="0.1" min="0" value="24" />
+    </div>
+    <div>
+<label for="windZone">
+  Windzone (DE)
+  <button type="button"
+          class="tip"
+          aria-describedby="tip-windZone"
+          aria-expanded="false">
+    <i class="fa fa-info-circle" aria-hidden="true"></i>
+    <span id="tip-windZone" role="tooltip" class="tip-bubble">
+      Windlastzone gemäß DIN EN 1991-1-4 für den Standort des Gebäudes.
+      Die Zone beeinflusst die berechnete Windlast.
+      <br>
+      <a href="https://www.hoening.de/windlastzonen/"
+         target="_blank" rel="noopener noreferrer"
+         style="color:#fff; text-decoration:underline;">
+        Mehr Infos
+      </a>
+    </span>
+  </button>
+</label>
+      <select id="windZone">
+        <option value="1">Zone 1</option>
+        <option value="2" selected>Zone 2</option>
+        <option value="3">Zone 3</option>
+        <option value="4">Zone 4</option>
+      </select>
+    </div>
+    <div>
+     <label for="terrain">
+  Terrain
+  <button type="button"
+          class="tip"
+          aria-describedby="tip-terrain"
+          aria-expanded="false">
+    <i class="fa fa-info-circle" aria-hidden="true"></i>
+    <span id="tip-terrain" role="tooltip" class="tip-bubble">
+      Geländekategorie nach Norm:<br>
+      I = See/Küste<br>
+      II = Offen/Land<br>
+      III = Vorstadt<br>
+      IV = Stadt/Kern<br>
+      Beeinflusst die Windlastberechnung.
+    </span>
+  </button>
+</label>
+      <select id="terrain">
+        <option value="1">I – See/Küste</option>
+        <option value="2">II – Offen/Land</option>
+        <option value="3" selected>III – Vorstadt</option>
+        <option value="4">IV – Stadt/Kern</option>
+      </select>
+    </div>
+    <div>
+      <label for="Ausrichtung">
+  Ausrichtung
+  <button type="button"
+          class="tip"
+          aria-describedby="tip-ausrichtung"
+          aria-expanded="false">
+    <i class="fa fa-info-circle" aria-hidden="true"></i>
+    <span id="tip-ausrichtung" role="tooltip" class="tip-bubble">
+      Montagerichtung der PV-Module: Horizontal (Querformat) oder Vertikal (Hochformat).
+    </span>
+  </button>
+      <select id="Ausrichtung">
+        <option value="1">Horizontal</option>
+        <option value="2" selected>Vertikal</option>
+      </select>
+    </div>
+    <div>
+    <label for="height">
+  Dachhöhe z (m)
+  <button type="button"
+          class="tip"
+          aria-describedby="tip-height"
+          aria-expanded="false">
+    <i class="fa fa-info-circle" aria-hidden="true"></i>
+    <span id="tip-height" role="tooltip" class="tip-bubble">
+      Höhe des Gebäudes über Geländeoberfläche in Metern. Beeinflusst die Windlast.
+    </span>
+  </button>
+</label>
+      <input id="height" type="number" step="0.1" min="1" value="7.6" />
+    </div>
+    <div>
+  <label for="d1">
+    Länge Gebäudefront
+    <button type="button" class="tip" aria-describedby="tip-d1" aria-expanded="false">
+      <i class="fa fa-info-circle" aria-hidden="true"></i>
+      <span id="tip-d1" role="tooltip" class="tip-bubble">
+        Kürzere Gebäudeseite in Metern (optional; wird im Report angezeigt).
+      </span>
+    </button>
+  </label>
+  <input id="d1" type="number" step="0.1" min="1" placeholder="z. B. 12.0" />
+</div>
+    <div>
+     <label for="roofType">
+  Dachhaut
+  <button type="button"
+          class="tip"
+          aria-describedby="tip-roofType"
+          aria-expanded="false">
+    <i class="fa fa-info-circle" aria-hidden="true"></i>
+    <span id="tip-roofType" role="tooltip" class="tip-bubble">
+      Art der Dachoberfläche: Bitumen, Kies/Gründach, PVC, EPDM oder glatter Beton.
+      Beeinflusst den Haftreibungskoeffizienten.
+    </span>
+  </button>
+</label>
+      <select id="roofType">
+        <option value="bitumen">Bitumen</option>
+        <option value="kies">Kies / Gründach</option>
+        <option value="pvc">PVC</option>
+        <option value="epdm">EPDM</option>
+        <option value="beton">Glatter Beton</option>
+      </select>
+    </div>
+  </div>
+  
+
+    <!-- ...existing code... -->
+
+<!-- ...existing code... -->
+  </section>
+<section class="card" id="site-report">
+  <h2>Bewertung der Windsoglasten und Haftreibung</h2>
+  
+  <br>
+  <div>
+   
+    <p>Die Beurteilung stützt sich auf Windkanaluntersuchungen in der atmosphärischen Grenzschicht, die gemäß <strong>DIN EN 1991-1-4:2021</strong> durchgeführt wurden. Ergänzend erfolgte die Berechnung mithilfe des zertifizierten Berechnungstools <strong>W15611-2E-RA-003</strong> der Firma <strong>Peutz Engineering</strong> vom 24. Juni 2024. Diese Kombination aus experimenteller Untersuchung und rechnerischer Analyse bildet die verlässliche Grundlage für die ermittelten Ergebnisse.</p>
+  </div>
+
+  <br>
+<table class="tight site-table" style="border-collapse:collapse; width:100%;">
+  <thead>
+    <tr><th colspan="2">Input-Parameter</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Wattstone [Grad]</td><td id="site-wattstone"></td></tr>
+    <tr><td>Windleitblech</td><td id="site-deflector"></td></tr>
+    <tr><td>Ausrichtung PV-Module</td><td id="site-orient"></td></tr>
+    <tr><td>Dachhöhe z [m]</td><td id="site-z"></td></tr>
+    <tr><td>Länge der kleinsten Gebäudefront d1 [m]</td><td id="site-d1"></td></tr>
+    <tr><td>Windlastzone</td><td id="site-windzone"></td></tr>
+    <tr><td>Geländekategorie</td><td id="site-terrain"></td></tr>
+    <tr><td>Bezugszeitraum [Jahre]</td><td id="site-period"></td></tr>
+    <tr><td>Sicherheitsfaktor Yf:q</td><td id="site-yfq"></td></tr>
+    <tr><td>Belastungsfaktor Yg</td><td id="site-yg"></td></tr>
+    <tr><td>Fläche pro PV-Modul [m²]</td><td id="site-area"></td></tr>
+    <tr><td>Gewicht pro Modul [kg]</td><td id="site-modw"></td></tr>
+    <tr><td>Kombinierte Ballastierung pro Modul [kg]</td><td id="site-ballast"></td></tr>
+    <tr><td>Dachhaut</td><td id="site-rooftype"></td></tr>
+    <tr><td>Haftreibungskoeffizient μ</td><td id="site-roofmu"></td></tr>
+  </tbody>
+  <thead>
+    <tr><th colspan="2" style="border-top:2px solid #000;">Output-Parameter</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Grundgeschwindigkeit Vb;0 [m/s]</td><td id="site-vb0"></td></tr>
+    <tr><td>Windsoglasten qp;50 Jahre [N/m²]</td><td id="site-qp50"></td></tr>
+    <tr><td>Windsoglasten qp; Referenzzeitraum [N/m²]</td><td id="site-qpref"></td></tr>
+  </tbody>
+</table>
+</section>
+
+ 
+
+
+
+<section class="card" id="site-figures">
+  <h2>Abbildungen</h2>
+
+  <figure class="site-fig">
+    <img id="site-main-img" src="" alt="Testgruppen Übersicht" loading="lazy">
+    <figcaption id="site-main-cap" class="site-cap"></figcaption>
+  </figure>
+
+  <figure class="site-fig">
+    <img id="site-schema-top-img" src="" alt="Schematische Darstellung Draufsicht" loading="lazy">
+    <figcaption id="site-schema-top-cap" class="site-cap"></figcaption>
+  </figure>
+
+  <figure class="site-fig">
+    <img id="site-schema-seite-img" src="" alt="Schematische Darstellung Seitenansicht" loading="lazy">
+    <figcaption id="site-schema-seite-cap" class="site-cap"></figcaption>
+  </figure>
+
+  <figure class="site-fig">
+    <img id="site-versaufbau-img" src="" alt="Versuchsaufbau Windkanal" loading="lazy">
+    <figcaption id="site-versaufbau-cap" class="site-cap"></figcaption>
+  </figure>
+
+  <!-- die drei Haftreibungs-Bilder als Grid -->
+  <div class="site-fig-grid">
+    <figure class="site-fig">
+      <img id="site-haftrei-img" src="" alt="Messaufbau Bitumen nass" loading="lazy">
+      <figcaption class="site-cap">
+        Abb. 5: Bestimmung des Gleitreibungskoeffizienten μ (nass) zwischen Prüfkörper und schieferbesandeter Bitumenoberlage bei definierter Wasserfilmdicke.
+      </figcaption>
+    </figure>
+    <figure class="site-fig">
+      <img id="site-haftrei2-img" src="" alt="Wet measurement of bituminous roofing with slate" loading="lazy">
+      <figcaption class="site-cap">
+        Abb. 6: Messaufbau (Testaufbau) für bituminöse Dachabdichtungen
+      </figcaption>
+    </figure>
+    <figure class="site-fig">
+      <img id="site-haftrei3-img" src="" alt="Untersuchte Dachoberflächen" loading="lazy">
+      <figcaption class="site-cap">
+        Abb. 7: Untersuchte Dachoberflächen: glatte Bitumenoberlage, schieferbesandete Bitumenoberlage, PVC-Dachbahn, EPDM-Dachbahn sowie glatte Betonoberfläche.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- NEU: Cp-Bereiche (nur Website, nicht PDF) -->
+<section class="card" id="site-cp-block">
+  <h2>Cp-Bereiche (Drag/Lift)</h2>
+  <div>
+    <table border="1" cellspacing="0" cellpadding="6" style="border-collapse:collapse; text-align:center; width:100%;">
+      <thead style="background:#f2f2f2;">
+        <tr>
+          <th rowspan="2"> </th>
+          <th colspan="2">Drag</th>
+          <th colspan="2">Lift</th>
+        </tr>
+        <tr>
+          <th>Single</th><th>Groups</th><th>Single</th><th>Groups</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Cp_min</strong></td>
+          <td><span id="site-drag-single-min"></span></td>
+          <td><span id="site-drag-groups-min"></span></td>
+          <td><span id="site-lift-single-min"></span></td>
+          <td><span id="site-lift-groups-min"></span></td>
+        </tr>
+        <tr>
+          <td><strong>Cp_max</strong></td>
+          <td><span id="site-drag-single-max"></span></td>
+          <td><span id="site-drag-groups-max"></span></td>
+          <td><span id="site-lift-single-max"></span></td>
+          <td><span id="site-lift-groups-max"></span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="margin-top:10px;">
+    <p><strong>Drag:</strong> Single <span id="site-drag-single-min-text"></span> – <span id="site-drag-single-max-text"></span>,
+       Groups <span id="site-drag-groups-min-text"></span> – <span id="site-drag-groups-max-text"></span></p>
+    <p><strong>Lift:</strong> Single <span id="site-lift-single-min-text"></span> – <span id="site-lift-single-max-text"></span>,
+       Groups <span id="site-lift-groups-min-text"></span> – <span id="site-lift-groups-max-text"></span></p>
+    
+  </div>
+
+<!-- NEW: Erklärtext unter den Cp-Werten (nur Website) --> 
+  <!--
+  <div id="site-cp-text" style="margin-top:12px;">
+    <p><strong>Drag (Widerstandskraft in Strömungsrichtung):</strong><br>
+      Hier geht es um die Kraft, die der Wind in seiner Hauptströmungsrichtung auf die Module ausübt.<br>
+      – Für <em>einzelne Module (Single)</em> bewegen sich die Werte zwischen
+      <span id="site-drag-single-min-text"></span> und <span id="site-drag-single-max-text"></span>.<br>
+      – Bei <em>gekoppelten Modulen (Groups)</em> liegen die Werte zwischen
+      <span id="site-drag-groups-min-text"></span> und <span id="site-drag-groups-max-text"></span>.
+    </p>
+
+    <p><strong>Lift (Auftriebskraft senkrecht zur Dachfläche):</strong><br>
+      Dieser Wert ist besonders wichtig, da er angibt, ob und wie stark der Wind versucht, die Module „anzuheben“.<br>
+      – Für <em>einzelne Module (Single)</em> reicht die Spanne von
+      <span id="site-lift-single-min-text"></span> bis <span id="site-lift-single-max-text"></span>.<br>
+      – Für <em>gekoppelte Module (Groups)</em> liegen die Werte zwischen
+      <span id="site-lift-groups-min-text"></span> und <span id="site-lift-groups-max-text"></span>.
+    </p>
+
+    <p><strong>Fazit:</strong><br>
+      Die Ergebnisse zeigen, dass die Kopplung von Modulen in Gruppen nicht nur den Windwiderstand, sondern auch den Auftrieb reduziert.
+      Das führt zu einer stabileren Gesamtanordnung und verringert die erforderlichen Ballastierungen, um die Module sicher auf dem Dach zu halten.
+    </p>
+  </div>
+  
+ NEW: Erklärtext unter den Cp-Werten (nur Website) -->
+
+</section>
+
+
+
+
+  <section class="card">
+     <h2>Berechnung der Windlasten</h2>
+     <div id="site-auswertung-text" class="site-eval-text">
+  <p>Für die <strong>Wattstone GmbH</strong> wurden durch das Ingenieurbüro <strong>Peutz bv</strong> umfassende Windkanalstudien durchgeführt. Ziel dieser Untersuchungen war es, die Windlasten auf das innovative PV-Panel-Trägersystem für Flachdächer aus Beton präzise zu bestimmen.</p>
+
+  <p>Die Messungen fanden in einem atmosphärischen Grenzschichtwindkanal statt und basierten auf maßstabsgetreuen Modellen. Dabei wurden sowohl nach Süden ausgerichtete Systeme als auch symmetrisch nach Ost–West orientierte Anordnungen betrachtet, bei denen die Module in Paaren gekoppelt waren. Zusätzlich wurden verschiedene Varianten und Dachkonfigurationen untersucht, um ein möglichst realistisches und umfassendes Bild der Belastungssituationen zu erhalten.</p>
+
+  <p>Ergänzend dazu hat <strong>Peutz Engineering</strong> für die <strong>Wattstone GmbH</strong> Hebetests durchgeführt. Diese dienten der Bestimmung der Kopplungseffekte zwischen benachbarten Panels innerhalb einer Reihe – in Übereinstimmung mit <strong>Anhang D.5 der Norm NEN 7250:2021</strong>.</p>
+
+  <p>Die Ergebnisse der Windkanalversuche, entsprechen vollständig den getroffenen Annahmen und Erkenntnissen, wie sie im <strong>Bericht W 15611-2E-RA-001 vom 11. Oktober 2023</strong> dokumentiert sind.</p>
+
+  <p>Damit ist sichergestellt, dass die gewonnenen Erkenntnisse eine verlässliche Grundlage für Planung, Konstruktion und Anwendung des Wattstone-Systems bieten.</p>
+</div>
+
+<div style="margin-top:10px;">
+  <b>Auswertung: Übersicht der erforderlichen zusätzlichen Ballastierung einschließlich Yf:q gemäß der Testgruppen (Abb. 1)</b>
+</div>
+<br>
+
+<div><b>Testgruppen (siehe Abb. 1):</b></div>
+
+       <table class="tight">
+        <thead>
+          <tr>
+            <th>Testgruppe gemäß Abb. 1</th>
+            <th>Gesamtgewicht [kg]</th>
+            <th>Zusätzliche Beschwerung pro PV-Modul nötig [kg]</th>
+          </tr>
+        </thead>
+      <tbody id="tbody"></tbody>
+     </table>
+     <div id="table-message"></div>
+    
+
+     <button id="pdfBtn" style="margin:20px 0 0 0;">PDF erzeugen</button>
+
+     
+  </section>
+
+  
+ <!-- Bild  Block mit wechsel-->
+
+
+  
+ 
+  
+</div>
+
+ <!-- Bild  wechsel im PDF-->
+
+
+
+
+
+
+
+<script src="data.universal.js"></script>
+<script>
+  // jetzt existiert window.WATTSTONE_DATA
+  const { FIXED_WIND_PRESSURE, DATA, STONES, ROOF_TYPES } = window.WATTSTONE_DATA;
+  // hier kommen deine Helfer (terrain_lookup, zmin_fn, pqp_fn, fqp_fn, qp_if_fn),
+  // SCHEMA_MAP/chooseSchema und *deine* compute(), die diese Konstanten nutzt.
+  // => Tabellen/Bilder/CP/PDF funktionieren wieder ohne die Daten ins HTML zu kopieren.
+</script>
+
+
+<script src="public/calc.browser.js"></script>
+<script>
+  const r = Calc.compute({ orientation: "EW", stone: "10V2", /* … */ });
+  console.log(r);
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+
+
+
+<script>
+// --- Schema-Bild-Mapping für Draufsicht (top) + Seitenansicht (side) ---
+// unterscheidet Orientation (EW/S), Layout (H/V) und optional je Stein
+const SCHEMA_MAP = {
+  top: {
+    EW: {
+      H: {
+        src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild2_1.png?v=1755872569",
+        cap: "Abb. 2: Schematische Darstellung 4 Module im Ost-West-Aufbau (horizontal)"
+      },
+      V: {
+        src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild2_1.png?v=1755872569",
+        cap: "Abb. 2: Schematische Darstellung 4 Module im Ost-West-Aufbau (vertikal)"
+      },
+      stones: { /* optional steinspezifisch überschreiben */ }
+    },
+    S: {
+      H: {
+        src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild2_2_4ae63234-8537-4bb6-95f0-a1ac930fd59b.png?v=1756130399",
+        cap: "Abb. 2: Schematische Darstellung 4 Module im Süd-Aufbau (horizontal)"
+      },
+      V: {
+        src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild2_2_4ae63234-8537-4bb6-95f0-a1ac930fd59b.png?v=1756130399",
+        cap: "Abb. 2: Schematische Darstellung 4 Module im Süd-Aufbau (vertikal)"
+      },
+      stones: { /* optional steinspezifisch überschreiben */ }
+    }
+  },
+  side: {
+    EW: {
+      H: {
+        src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild3_1.png?v=1755872569",
+        cap: "Abb. 3: Schematische Seitenansicht Ost-West-Aufbau (horizontal)"
+      },
+      V: {
+        src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild3_1.png?v=1755872569",
+        cap: "Abb. 3: Schematische Seitenansicht Ost-West-Aufbau (vertikal)"
+      },
+      stones: { /* optional steinspezifisch überschreiben */ }
+    },
+    S: {
+      H: {
+        src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild3_2.png?v=1755872569",
+        cap: "Abb. 3: Schematische Seitenansicht Süd-Aufbau (horizontal)"
+      },
+      V: {
+        src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild3_2.png?v=1755872569",
+        cap: "Abb. 3: Schematische Seitenansicht Süd-Aufbau (vertikal)"
+      },
+      stones: { /* optional steinspezifisch überschreiben */ }
+    }
+  }
+};
+
+// Helper: nimmt 'top'/'side', Orientation 'S'/'EW', Layout '1'|'2' (H/V) und Stein-Key ("0","6","10V1","10V2","10XL","15")
+function chooseSchema(kind, orientation, layoutValue, stoneKey){
+  const ori = (orientation === 'S') ? 'S' : 'EW';
+  const lay = (layoutValue === '2' || layoutValue === 'V') ? 'V' : 'H'; // '1'->H, '2'->V
+  const base = SCHEMA_MAP[kind][ori];
+  // steinspezifische Overrides zuerst prüfen (falls hinterlegt)
+  const override = base.stones?.[stoneKey]?.[lay];
+  return override || base[lay];
+}
+
+
+// nach deiner chooseSchema-Definition einfügen:
+window.chooseSchema = chooseSchema; // global verfügbar
+
+// Fallback-Bilder, falls ein Mapping fehlt
+window.getSchemaFallback = function(kind, orientation){
+  if (kind === 'top') {
+    return orientation === 'S'
+      ? { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild2_2_4ae63234-8537-4bb6-95f0-a1ac930fd59b.png?v=1756130399",
+          cap: "Abb. 2: Schematische Darstellung Süd" }
+      : { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild2_1.png?v=1755872915",
+          cap: "Abb. 2: Schematische Darstellung Ost-West" };
+  } else {
+    return orientation === 'S'
+      ? { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild3_2.png?v=1755872569",
+          cap: "Abb. 3: Schematische Seitenansicht Süd" }
+      : { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild3_1.png?v=1755872569",
+          cap: "Abb. 3: Schematische Seitenansicht Ost-West" };
+  }
+};
+
+/* ---------- SÜD (orientation === "S") ---------- */
+/* Draufsicht (Abb. 2) */
+SCHEMA_MAP.top.S.stones["0"] = {
+  H: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_Top_Sued6_Hori.png?v=1757073586",
+       cap: "Abb. 2: Schematische Darstellung Süd (horizontal) – Wattstone 0°" },
+  V: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_Top_Sued6_Verti.png?v=1757073586",
+       cap: "Abb. 2: Schematische Darstellung Süd (vertikal) – Wattstone 0°" }
+};
+SCHEMA_MAP.top.S.stones["6"] = {
+  H: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_Top_Sued6_Hori.png?v=1757073586",
+       cap: "Abb. 2: Schematische Darstellung Süd (horizontal) – Wattstone 6°" },
+  V: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_Top_Sued6_Verti.png?v=1757073586",
+       cap: "Abb. 2: Schematische Darstellung Süd (vertikal) – Wattstone 6°" }
+};
+SCHEMA_MAP.top.S.stones["10V1"] = {
+  H: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_Top_sued_10XL.png?v=1757073593", cap: "Abb. 2: Schematische Darstellung Süd (horizontal) – Wattstone 10° V1" },
+  V: { src: "URL_TOP_S_10V1_V", cap: "Abb. 2: Schematische Darstellung Süd (vertikal) – Wattstone 10° V1" }
+};
+SCHEMA_MAP.top.S.stones["10V2"] = {
+  H: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_Top_sued_10XL.png?v=1757073593", cap: "Abb. 2: Schematische Darstellung Süd (horizontal) – Wattstone 10° V2" },
+  V: { src: "URL_TOP_S_10V2_V", cap: "Abb. 2: Schematische Darstellung Süd (vertikal) – Wattstone 10° V2" }
+};
+SCHEMA_MAP.top.S.stones["10XL"] = {
+  H: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_Top_sued_10XL.png?v=1757073593", cap: "Abb. 2: Schematische Darstellung Süd (horizontal) – Wattstone 10° XL" },
+  V: { src: "URL_TOP_S_10XL_V", cap: "Abb. 2: Schematische Darstellung Süd (vertikal) – Wattstone 10° XL" }
+};
+SCHEMA_MAP.top.S.stones["15"] = {
+  H: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_Top_sued_10XL.png?v=1757073593", cap: "Abb. 2: Schematische Darstellung Süd (horizontal) – Wattstone 15°" },
+  V: { src: "URL_TOP_S_15_V", cap: "Abb. 2: Schematische Darstellung Süd (vertikal) – Wattstone 15°" }
+};
+
+/* Seitenansicht (Abb. 3) */
+SCHEMA_MAP.side.S.stones["0"] = {
+  H: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_side_Sued0_Hori.png?v=1757073586",
+       cap: "Abb. 3: Schematische Seitenansicht Süd (horizontal) – Wattstone 0°" },
+  V: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_side_Sued0_Hori.png?v=1757073586",
+       cap: "Abb. 3: Schematische Seitenansicht Süd (vertikal) – Wattstone 0°" }
+};
+SCHEMA_MAP.side.S.stones["6"] = {
+  H: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_side_Sued6_Hori.png?v=1757073586",
+       cap: "Abb. 3: Schematische Seitenansicht Süd (horizontal) – Wattstone 6°" },
+  V: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_side_Sued6_Verti.png?v=1757073586",
+       cap: "Abb. 3: Schematische Seitenansicht Süd (vertikal) – Wattstone 6°" }
+};
+SCHEMA_MAP.side.S.stones["10V1"] = {
+  H: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_Side_Sued10V1.png?v=1757073593", cap: "Abb. 3: Schematische Seitenansicht Süd (horizontal) – Wattstone 10° V1" },
+  V: { src: "URL_SIDE_S_10V1_V", cap: "Abb. 3: Schematische Seitenansicht Süd (vertikal) – Wattstone 10° V1" }
+};
+SCHEMA_MAP.side.S.stones["10V2"] = {
+  H: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_Side_Sued10.png?v=1757073599", cap: "Abb. 3: Schematische Seitenansicht Süd (horizontal) – Wattstone 10° V2" },
+  V: { src: "URL_SIDE_S_10V2_V", cap: "Abb. 3: Schematische Seitenansicht Süd (vertikal) – Wattstone 10° V2" }
+};
+SCHEMA_MAP.side.S.stones["10XL"] = {
+  H: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_Side_sued_10XL.png?v=1757073606", cap: "Abb. 3: Schematische Seitenansicht Süd (horizontal) – Wattstone 10° XL" },
+  V: { src: "URL_SIDE_S_10XL_V", cap: "Abb. 3: Schematische Seitenansicht Süd (vertikal) – Wattstone 10° XL" }
+};
+SCHEMA_MAP.side.S.stones["15"] = {
+  H: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_Side_Sued_15.png?v=1757073611", cap: "Abb. 3: Schematische Seitenansicht Süd (horizontal) – Wattstone 15°" },
+  V: { src: "URL_SIDE_S_15_V", cap: "Abb. 3: Schematische Seitenansicht Süd (vertikal) – Wattstone 15°" }
+};
+
+/* ---------- OST-WEST (orientation === "EW") ---------- */
+/* Draufsicht (Abb. 2) */
+SCHEMA_MAP.top.EW.stones["0"] = {
+  H: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_Top_Sued6_Verti.png?v=1757073586", cap: "Abb. 2: Schematische Darstellung Ost-West (vertikal) – Wattstone 0°" },
+  V: { src: "URL_TOP_EW_0_V", cap: "Abb. 2: Schematische Darstellung Ost-West (vertikal) – Wattstone 0°" }
+};
+SCHEMA_MAP.top.EW.stones["6"] = {
+  H: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_Top_Sued6_Verti.png?v=1757073586", cap: "Abb. 2: Schematische Darstellung Ost-West (vertikal) – Wattstone 6°" },
+  V: { src: "URL_TOP_EW_6_V", cap: "Abb. 2: Schematische Darstellung Ost-West (vertikal) – Wattstone 6°" }
+};
+SCHEMA_MAP.top.EW.stones["10V1"] = {
+  H: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_Top_OstWest10V1.png?v=1757073593", cap: "Abb. 2: Schematische Darstellung Ost-West (horizontal) – Wattstone 10° V1" },
+  V: { src: "URL_TOP_EW_10V1_V", cap: "Abb. 2: Schematische Darstellung Ost-West (vertikal) – Wattstone 10° V1" }
+};
+SCHEMA_MAP.top.EW.stones["10V2"] = {
+  H: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_Top_OstWest10.png?v=1757073599", cap: "Abb. 2: Schematische Darstellung Ost-West (horizontal) – Wattstone 10° V2" },
+  V: { src: "URL_TOP_EW_10V2_V", cap: "Abb. 2: Schematische Darstellung Ost-West (vertikal) – Wattstone 10° V2" }
+};
+SCHEMA_MAP.top.EW.stones["10XL"] = {
+  H: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_Top_OstWest_10XL.png?v=1757073605", cap: "Abb. 2: Schematische Darstellung Ost-West (horizontal) – Wattstone 10° XL" },
+  V: { src: "URL_TOP_EW_10XL_V", cap: "Abb. 2: Schematische Darstellung Ost-West (vertikal) – Wattstone 10° XL" }
+};
+SCHEMA_MAP.top.EW.stones["15"] = {
+  H: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_Top_OSTWest_15.png?v=1757073611", cap: "Abb. 2: Schematische Darstellung Ost-West (horizontal) – Wattstone 15°" },
+  V: { src: "URL_TOP_EW_15_V", cap: "Abb. 2: Schematische Darstellung Ost-West (vertikal) – Wattstone 15°" }
+};
+
+/* Seitenansicht (Abb. 3) */
+SCHEMA_MAP.side.EW.stones["0"] = {
+  H: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_side_Sued0_Hori.png?v=1757073586", cap: "Abb. 3: Schematische Seitenansicht Ost-West (horizontal) – Wattstone 0°" },
+  V: { src: "URL_SIDE_EW_0_V", cap: "Abb. 3: Schematische Seitenansicht Ost-West (vertikal) – Wattstone 0°" }
+};
+SCHEMA_MAP.side.EW.stones["6"] = {
+  H: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_side_Sued6_Hori.png?v=1757073586", cap: "Abb. 3: Schematische Seitenansicht Ost-West (horizontal) – Wattstone 6°" },
+  V: { src: "URL_SIDE_EW_6_V", cap: "Abb. 3: Schematische Seitenansicht Ost-West (vertikal) – Wattstone 6°" }
+};
+SCHEMA_MAP.side.EW.stones["10V1"] = {
+  H: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_Side_OstWest10V1.png?v=1757073594", cap: "Abb. 3: Schematische Seitenansicht Ost-West (horizontal) – Wattstone 10° V1" },
+  V: { src: "URL_SIDE_EW_10V1_V", cap: "Abb. 3: Schematische Seitenansicht Ost-West (vertikal) – Wattstone 10° V1" }
+};
+SCHEMA_MAP.side.EW.stones["10V2"] = {
+  H: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_Side_OstWest10.png?v=1757073599", cap: "Abb. 3: Schematische Seitenansicht Ost-West (horizontal) – Wattstone 10° V2" },
+  V: { src: "URL_SIDE_EW_10V2_V", cap: "Abb. 3: Schematische Seitenansicht Ost-West (vertikal) – Wattstone 10° V2" }
+};
+SCHEMA_MAP.side.EW.stones["10XL"] = {
+  H: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_Side_OstWest_10XL.png?v=1757073606", cap: "Abb. 3: Schematische Seitenansicht Ost-West (horizontal) – Wattstone 10° XL" },
+  V: { src: "URL_SIDE_EW_10XL_V", cap: "Abb. 3: Schematische Seitenansicht Ost-West (vertikal) – Wattstone 10° XL" }
+};
+SCHEMA_MAP.side.EW.stones["15"] = {
+  H: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/calc_Side_OSTWest_15.png?v=1757073611", cap: "Abb. 3: Schematische Seitenansicht Ost-West (horizontal) – Wattstone 15°" },
+  V: { src: "URL_SIDE_EW_15_V", cap: "Abb. 3: Schematische Seitenansicht Ost-West (vertikal) – Wattstone 15°" }
+};
+
+
+
+ 
+
+
+/* --- Beispiel für optionale steinspezifische Abweichungen (einfach einkommentieren & URLs setzen)
+SCHEMA_MAP.top.S.stones["10XL"] = {
+  H: { src:"DEINE_URL_TOP_S_10XL_H", cap:"Abb. 2: Süd (horizontal), 10° XL" },
+  V: { src:"DEINE_URL_TOP_S_10XL_V", cap:"Abb. 2: Süd (vertikal), 10° XL" }
+};
+SCHEMA_MAP.side.S.stones["10XL"] = {
+  H: { src:"DEINE_URL_SIDE_S_10XL_H", cap:"Abb. 3: Süd (horizontal), 10° XL" },
+  V: { src:"DEINE_URL_SIDE_S_10XL_V", cap:"Abb. 3: Süd (vertikal), 10° XL" }
+};
+*/
+</script>
+
+<!-- 1) Daten für Browser -->
+<script src="data.universal.js"></script>
+
+<!-- 2) Deine Schema-Mappings (SCHEMA_MAP + chooseSchema) -->
+<script>
+  /* dein kompletter SCHEMA_MAP / chooseSchema Block hier (so wie gepostet) */
+</script>
+
+<!-- 3) Das Browser-Bundle aus dem Build -->
+<script src="public/calc.browser.js"></script>
+
+<!-- 4) html2pdf (falls Button noch aktiv) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<!-- 5) MAIN INIT: nutzt NUR Calc.compute(...) -->
+<script>
+(function(){
+  // --- Helpers ---
+  const $  = (id) => document.getElementById(id);
+  const num= (v) => v == null ? 0 : parseFloat(String(v).replace(',', '.')) || 0;
+  const ri = (x) => Math.round(Number(x)||0);
+  const setAll = (id, val) =>
+    document.querySelectorAll(`[id="${id}"]`).forEach(el => el.textContent = (val ?? '') + '');
+
+  // Label-Helfer für UI
+  const label = {
+    orientation: (v) => v === 'S' ? 'Südausrichtung' : 'Ost-West',
+    windZone:    (v) => ({'1':'Zone 1','2':'Zone 2','3':'Zone 3','4':'Zone 4'}[v] || v),
+    terrain:     (t) => ({1:'I – See/Küste',2:'II – Offen/Land',3:'III – Vorstadt',4:'IV – Stadt/Kern'}[t] || t),
+    stone:       (key) => {
+      const opt = $('stone')?.selectedOptions?.[0]?.text;
+      return opt || key;
+    },
+    roofType:    (key) => {
+      const opt = $('roofType')?.selectedOptions?.[0]?.text;
+      return opt || key || '';
+    }
+  };
+
+  // CP-Bereiche füllen (mit Fallback)
+  function fillCp(orientation, stoneKey){
+    const put = (id, v) => { const el = $('site-'+id); if (el) el.textContent = v ?? '–'; };
+
+    let cp = null;
+    if (window.Calc && typeof Calc.cpBySelection === 'function') {
+      const meta = (Calc.stoneMeta && Calc.stoneMeta[stoneKey]) || {};
+      cp = Calc.cpBySelection({ angle: meta.angle ?? null, variant: meta.variant ?? null, orientation });
+    }
+
+    if (!cp && window.WATTSTONE_DATA?.CP_RANGES) {
+      // Fallback-Struktur optional – wenn vorhanden
+      cp = window.WATTSTONE_DATA.CP_RANGES[orientation] || null;
+    }
+
+    if (!cp) {
+      ['drag-single-min','drag-single-max','drag-groups-min','drag-groups-max',
+       'lift-single-min','lift-single-max','lift-groups-min','lift-groups-max',
+       'drag-single-min-text','drag-single-max-text','drag-groups-min-text','drag-groups-max-text',
+       'lift-single-min-text','lift-single-max-text','lift-groups-min-text','lift-groups-max-text'
+      ].forEach(id => put(id, '–'));
+      return;
+    }
+
+    put('drag-single-min', cp.drag?.single?.min ?? '–');
+    put('drag-single-max', cp.drag?.single?.max ?? '–');
+    put('drag-groups-min', cp.drag?.groups?.min ?? '–');
+    put('drag-groups-max', cp.drag?.groups?.max ?? '–');
+    put('lift-single-min', cp.lift?.single?.min ?? '–');
+    put('lift-single-max', cp.lift?.single?.max ?? '–');
+    put('lift-groups-min', cp.lift?.groups?.min ?? '–');
+    put('lift-groups-max', cp.lift?.groups?.max ?? '–');
+
+    // Textzeilen darunter
+    put('drag-single-min-text', cp.drag?.single?.min ?? '–');
+    put('drag-single-max-text', cp.drag?.single?.max ?? '–');
+    put('drag-groups-min-text', cp.drag?.groups?.min ?? '–');
+    put('drag-groups-max-text', cp.drag?.groups?.max ?? '–');
+    put('lift-single-min-text', cp.lift?.single?.min ?? '–');
+    put('lift-single-max-text', cp.lift?.single?.max ?? '–');
+    put('lift-groups-min-text', cp.lift?.groups?.min ?? '–');
+    put('lift-groups-max-text', cp.lift?.groups?.max ?? '–');
+  }
+
+  // Abbildungen setzen (alle, inkl. Haftreibung)
+ function updateFigures(){
+  const $ = (id) => document.getElementById(id);
+
+  const orientation = $('orientation').value;     // "S" | "EW"
+  const layout      = $('Ausrichtung')?.value||'1';
+  const stoneKey    = $('stone')?.value||'10V2';
+
+  // Abb. 1 (funktionierte schon)
+  const mainImg=$('site-main-img'), mainCap=$('site-main-cap');
+  if (mainImg && mainCap){
+    if (orientation==='S' && layout==='1'){
+      mainImg.src="https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild1_3.png?v=1755872569";
+      mainCap.textContent="Abb. 1: Testgruppen Süd Horizontal";
+    } else if (orientation==='S' && layout==='2'){
+      mainImg.src="https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild1_2.png?v=1755872569";
+      mainCap.textContent="Abb. 1: Testgruppen Süd Vertikal";
+    } else {
+      mainImg.src="https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild1_1.png?v=1755872915";
+      mainCap.textContent="Abb. 1: Testgruppen G1, G2, G3 und G4";
+    }
+  }
+
+  // --- HARTE DEFAULTS für Abb. 2/3 ---
+  const DEFAULTS = {
+    top: {
+      EW: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild2_1.png?v=1755872915",
+            cap: "Abb. 2: Schematische Darstellung Ost-West" },
+      S:  { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild2_2_4ae63234-8537-4bb6-95f0-a1ac930fd59b.png?v=1756130399",
+            cap: "Abb. 2: Schematische Darstellung Süd" }
+    },
+    side: {
+      EW: { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild3_1.png?v=1755872569",
+            cap: "Abb. 3: Schematische Seitenansicht Ost-West" },
+      S:  { src: "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild3_2.png?v=1755872569",
+            cap: "Abb. 3: Schematische Seitenansicht Süd" }
+    }
+  };
+
+  // Versuchen, Mapping zu nutzen – sonst auf Defaults fallen
+  let top = null, side = null;
+  if (typeof window.chooseSchema === 'function') {
+    try { top  = window.chooseSchema('top',  orientation, layout, stoneKey); } catch(e){}
+    try { side = window.chooseSchema('side', orientation, layout, stoneKey); } catch(e){}
+  }
+  if (!top)  top  = DEFAULTS.top [orientation==='S'?'S':'EW'];
+  if (!side) side = DEFAULTS.side[orientation==='S'?'S':'EW'];
+
+  const topImg  = $('site-schema-top-img');
+  const topCap  = $('site-schema-top-cap');
+  if (topImg){ topImg.src = top.src; if (topCap) topCap.textContent = top.cap; }
+
+  const sideImg = $('site-schema-seite-img');
+  const sideCap = $('site-schema-seite-cap');
+  if (sideImg){ sideImg.src = side.src; if (sideCap) sideCap.textContent = side.cap; }
+
+  // Abb. 4
+  const vImg=$('site-versaufbau-img'), vCap=$('site-versaufbau-cap');
+  if (vImg && vCap){
+    if (orientation==='S' && layout==='1'){
+      vImg.src="https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild4_2.png?v=1755872571";
+      vCap.textContent="Abb. 4: Versuchsaufbau … Süd Horizontal";
+    } else if (orientation==='S' && layout==='2'){
+      vImg.src="https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild4_3.png?v=1755872571";
+      vCap.textContent="Abb. 4: Versuchsaufbau … Süd Vertikal";
+    } else {
+      vImg.src="https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild4_1.png?v=1755872571";
+      vCap.textContent="Abb. 4: Versuchsaufbau … Ost-West";
+    }
+  }
+}
+
+  // Input- & Output-Parameter-Tabellen (Site & PDF) befüllen
+  function fillInputTables(input, res){
+    // Site
+    setAll('site-wattstone', label.stone(input.stone));
+    setAll('site-deflector', (res.deflectorUsed>0) ? `${ri(res.deflectorUsed)} kg (aktiv)` : '–');
+    setAll('site-orient',    label.orientation(input.orientation));
+    setAll('site-z',         Number(input.height).toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1}));
+    setAll('site-d1',        '—'); // falls du d1 später einführst
+    setAll('site-windzone',  label.windZone(input.windZone));
+    setAll('site-terrain',   label.terrain(input.terrain));
+    setAll('site-period',    '25'); // fix laut Vorgabe
+    // Sicherheits-/Belastungsfaktoren (falls in Calc oder DATA vorhanden)
+    const YFQ = window.WATTSTONE_DATA?.DATA?.constants?.YFQ ?? '1,5';
+    const YG  = window.WATTSTONE_DATA?.DATA?.constants?.YG  ?? '1,0';
+    setAll('site-yfq', YFQ);
+    setAll('site-yg',  YG);
+    const area = (input.moduleH * input.moduleW);
+    setAll('site-area', area.toLocaleString('de-DE',{maximumFractionDigits:2}));
+    setAll('site-modw', Number(input.moduleWeight).toLocaleString('de-DE',{maximumFractionDigits:1}));
+    setAll('site-ballast', (res.deflectorUsed>0
+      ? `${ri((window.WATTSTONE_DATA?.STONES?.[input.stone]?.base||0) + input.moduleWeight + res.deflectorUsed)} kg`
+      : `${ri((window.WATTSTONE_DATA?.STONES?.[input.stone]?.base||0) + input.moduleWeight)} kg`)
+    );
+    setAll('site-rooftype', label.roofType(input.roofType));
+    // Dachhaut-μ: versuche aus ROOF_TYPES zu ziehen
+    let mu = '';
+    const RT = window.WATTSTONE_DATA?.ROOF_TYPES?.[input.roofType];
+    if (RT && (RT.mu!=null && RT.mu!=='')) mu = RT.mu;
+    setAll('site-roofmu', mu!=='' ? String(mu).replace('.',',') : '—');
+
+    // Output (Site)
+    setAll('site-vb0',   (res.vb0 ?? '').toLocaleString('de-DE',{maximumFractionDigits:2}));
+    setAll('site-qp50',  (res.qp_char ?? '').toLocaleString('de-DE',{maximumFractionDigits:1}));
+    setAll('site-qpref', (res.qp_char ?? '').toLocaleString('de-DE',{maximumFractionDigits:1})); // falls eigener Wert fehlt
+
+    // PDF (nur dann sinnvoll, wenn du lokal testweise exportierst)
+    setAll('pdf-wattstone', label.stone(input.stone));
+    setAll('pdf-deflector', (res.deflectorUsed>0) ? `${ri(res.deflectorUsed)} kg (aktiv)` : '–');
+    setAll('pdf-orient',    label.orientation(input.orientation));
+    setAll('pdf-z',         Number(input.height).toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1}));
+    setAll('pdf-d1',        '—');
+    setAll('pdf-windzone',  label.windZone(input.windZone));
+    setAll('pdf-terrain',   label.terrain(input.terrain));
+    setAll('pdf-period',    '25');
+    setAll('pdf-yfq',       YFQ);
+    setAll('pdf-yg',        YG);
+    setAll('pdf-area',      area.toLocaleString('de-DE',{maximumFractionDigits:2}));
+    setAll('pdf-modw',      Number(input.moduleWeight).toLocaleString('de-DE',{maximumFractionDigits:1}));
+    setAll('pdf-ballast',   (res.deflectorUsed>0
+      ? `${ri((window.WATTSTONE_DATA?.STONES?.[input.stone]?.base||0) + input.moduleWeight + res.deflectorUsed)} kg`
+      : `${ri((window.WATTSTONE_DATA?.STONES?.[input.stone]?.base||0) + input.moduleWeight)} kg`)
+    );
+    setAll('pdf-rooftype',  label.roofType(input.roofType));
+    setAll('pdf-roofmu',    mu!=='' ? String(mu).replace('.',',') : '—');
+
+    setAll('pdf-vb0',   (res.vb0 ?? '').toLocaleString('de-DE',{maximumFractionDigits:2}));
+    setAll('pdf-qp50',  (res.qp_char ?? '').toLocaleString('de-DE',{maximumFractionDigits:1}));
+    setAll('pdf-qpref', (res.qp_char ?? '').toLocaleString('de-DE',{maximumFractionDigits:1}));
+  }
+
+  // Hauptberechnung + Tabellen
+  function compute(){
+    if (!window.Calc?.compute) {
+      console.error('Calc.compute fehlt – lade public/calc.browser.js?');
+      return;
+    }
+    const input = {
+      orientation:  $('orientation').value,
+      stone:        $('stone').value,
+      windZone:     $('windZone').value,
+      terrain:      parseInt($('terrain').value,10),
+      height:       Math.max(0.1, num($('height').value)),
+      moduleH:      Math.max(0.1, num($('moduleH').value)),
+      moduleW:      Math.max(0.1, num($('moduleW').value)),
+      moduleWeight: Math.max(0,   num($('moduleWeight').value)),
+      roofType:     $('roofType')?.value || null
+    };
+    const res = Calc.compute(input);
+
+    // Testgruppen-Tabelle (#tbody)
+    const tbody = $('tbody');
+    if (tbody) {
+      tbody.innerHTML = '';
+      (res.groups || []).forEach(g => {
+        const kClass = g.K < 0 ? 'k-neg' : 'k-pos';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${g.group}</td>
+          <td>${ri(g.J)}</td>
+          <td><span class="kchip ${kClass}">${ri(g.K)}</span></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Meldung
+    const msgHost = $('table-message');
+    if (msgHost){
+      if (res.allNegative) {
+        msgHost.innerHTML = `
+          <div style="margin-top:10px;">
+            <div style="color:#1ec41e;font-weight:bold;">
+              Die aktuell gewählte Ballastierung ist ausreichend dimensioniert.
+            </div>
+            <div style="color:#222; font-weight:normal; margin-top:12px;">
+              <strong>Beschluss:</strong> Gemäß W15611-2E-RA-001 (Peutz) erfüllt.
+            </div>
+          </div>`;
+      } else if (res.maxPositiveK != null) {
+        msgHost.innerHTML = `
+          <div style="margin-top:10px;">
+            <div style="color:#ff3c3c;font-weight:bold;">
+              Zusätzliche Last pro Modul erforderlich: <b>${ri(res.maxPositiveK)} kg</b>.
+            </div>
+            <div style="color:#222; font-weight:normal; margin-top:12px;">
+              Bitte Ballastierung entsprechend anpassen.
+            </div>
+          </div>`;
+      } else {
+        msgHost.innerHTML = '';
+      }
+    }
+
+    // Input/Output-Tabellen füllen
+    fillInputTables(input, res);
+
+    // CP-Bereiche
+    fillCp(input.orientation, input.stone);
+
+    // PDF-Button (vorerst aus)
+    const pdfBtn = $('pdfBtn');
+    if (pdfBtn) pdfBtn.style.display = 'none';
+  }
+
+  // Events & Initialisierung
+  const CTRL_IDS = ['orientation','Ausrichtung','stone','moduleH','moduleW','moduleWeight','windZone','terrain','height','roofType'];
+  function bind(){
+    CTRL_IDS.forEach(id=>{
+      const el=$(id); if(!el) return;
+      el.addEventListener('input', ()=>{ compute(); updateFigures(); });
+      el.addEventListener('change',()=>{ compute(); updateFigures(); });
+    });
+    // PDF Button absichtlich deaktiviert (später E-Mail/Backend)
+    $('pdfBtn') && ($('pdfBtn').style.display='none');
+
+    compute();
+    updateFigures();
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bind);
+  } else {
+    bind();
+  }
+})();
+</script>
+
+
+<!-- Daten (FIXED_WIND_PRESSURE, DATA, STONES, ROOF_TYPES) -->
+<script src="data.universal.js"></script>
+
+<!-- Browser-Bundle mit Calc.compute / Calc.cpBySelection -->
+<script src="public/calc.browser.js"></script>
+
+<script>
+(function(){
+  // ---- kleine Helfer ----
+  const $  = (id) => document.getElementById(id);
+  const num= (v) => v == null ? 0 : parseFloat(String(v).replace(',', '.')) || 0;
+  const ri = (x) => Math.round(Number(x)||0);
+  const setAll = (id, val) =>
+    document.querySelectorAll(`[id="${id}"]`).forEach(el => el.textContent = (val ?? '') + '');
+
+  // --- Abb. 2/3: harte Defaults + optional Mapping-Funktion ---
+  const DEFAULTS = {
+    top: {
+      EW: { src:"https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild2_1.png?v=1755872915", cap:"Abb. 2: Schematische Darstellung Ost-West" },
+      S:  { src:"https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild2_2_4ae63234-8537-4bb6-95f0-a1ac930fd59b.png?v=1756130399", cap:"Abb. 2: Schematische Darstellung Süd" }
+    },
+    side: {
+      EW: { src:"https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild3_1.png?v=1755872569", cap:"Abb. 3: Schematische Seitenansicht Ost-West" },
+      S:  { src:"https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild3_2.png?v=1755872569", cap:"Abb. 3: Schematische Seitenansicht Süd" }
+    }
+  };
+
+  // Optional: wenn du später feiner unterscheiden willst
+  window.chooseSchema = function(kind, orientation /* 'S'|'EW' */){
+    const ori = (orientation === 'S') ? 'S' : 'EW';
+    return DEFAULTS[kind][ori];
+  };
+
+  function updateFigures(){
+    const orientation = $('orientation').value;      // "S" | "EW"
+    const layout      = $('Ausrichtung')?.value||'1';
+
+    // Abb. 1
+    const mImg=$('site-main-img'), mCap=$('site-main-cap');
+    if (mImg && mCap){
+      if (orientation==='S' && layout==='1'){
+        mImg.src="https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild1_3.png?v=1755872569";
+        mCap.textContent="Abb. 1: Testgruppen Süd Horizontal";
+      } else if (orientation==='S' && layout==='2'){
+        mImg.src="https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild1_2.png?v=1755872569";
+        mCap.textContent="Abb. 1: Testgruppen Süd Vertikal";
+      } else {
+        mImg.src="https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild1_1.png?v=1755872915";
+        mCap.textContent="Abb. 1: Testgruppen G1, G2, G3 und G4";
+      }
+    }
+
+    // Abb. 2 (top) + Abb. 3 (side) – IMMER befüllen (mit Fallback)
+    let top  = DEFAULTS.top [orientation==='S'?'S':'EW'];
+    let side = DEFAULTS.side[orientation==='S'?'S':'EW'];
+    try { if (typeof window.chooseSchema==='function') top  = window.chooseSchema('top',  orientation) || top; } catch(e){}
+    try { if (typeof window.chooseSchema==='function') side = window.chooseSchema('side', orientation) || side; } catch(e){}
+
+    const topImg=$('site-schema-top-img'), topCap=$('site-schema-top-cap');
+    if (topImg){ topImg.src = top.src; if (topCap) topCap.textContent = top.cap; }
+
+    const sideImg=$('site-schema-seite-img'), sideCap=$('site-schema-seite-cap');
+    if (sideImg){ sideImg.src = side.src; if (sideCap) sideCap.textContent = side.cap; }
+
+    // Abb. 4
+    const vImg=$('site-versaufbau-img'), vCap=$('site-versaufbau-cap');
+    if (vImg && vCap){
+      if (orientation==='S' && layout==='1'){
+        vImg.src="https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild4_2.png?v=1755872571";
+        vCap.textContent="Abb. 4: Versuchsaufbau … Süd Horizontal";
+      } else if (orientation==='S' && layout==='2'){
+        vImg.src="https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild4_3.png?v=1755872571";
+        vCap.textContent="Abb. 4: Versuchsaufbau … Süd Vertikal";
+      } else {
+        vImg.src="https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Bild4_1.png?v=1755872571";
+        vCap.textContent="Abb. 4: Versuchsaufbau … Ost-West";
+      }
+    }
+
+    // Abb. 5–7 (fixe Bilder)
+    $('site-haftrei-img')  && ($('site-haftrei-img').src  = "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Measurement_setup_of_bitumous_roofing.png?v=1756304313");
+    $('site-haftrei2-img') && ($('site-haftrei2-img').src = "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Wet_measurement_of_bitumous_roofing_with_slate.png?v=1756304312");
+    $('site-haftrei3-img') && ($('site-haftrei3-img').src = "https://cdn.shopify.com/s/files/1/0755/9351/5332/files/Calculation_Investigated_roof_coverings.png?v=1756304313");
+  }
+
+  // --- CP-Bereiche (mit robustem Fallback) ---
+  function fillCp(orientation){
+    // Versuch: aus Calc.cpBySelection
+    let cp = null;
+    if (window.Calc && typeof Calc.cpBySelection === 'function'){
+      cp = Calc.cpBySelection({ orientation });
+    }
+    // Fallback
+    if (!cp) {
+      cp = (orientation==='S') ? {
+        drag:{single:{min:-0.60,max:0.35}, groups:{min:-0.45,max:0.30}},
+        lift:{single:{min:-1.10,max:0.15}, groups:{min:-0.75,max:0.10}}
+      } : {
+        drag:{single:{min:-0.50,max:0.30}, groups:{min:-0.40,max:0.25}},
+        lift:{single:{min:-1.00,max:0.10}, groups:{min:-0.70,max:0.05}}
+      };
+    }
+    const put = (id, v) => setAll('site-'+id, (v!=null? String(v).replace('.',',') : '—'));
+    put('drag-single-min', cp.drag.single.min);
+    put('drag-single-max', cp.drag.single.max);
+    put('drag-groups-min', cp.drag.groups.min);
+    put('drag-groups-max', cp.drag.groups.max);
+    put('lift-single-min', cp.lift.single.min);
+    put('lift-single-max', cp.lift.single.max);
+    put('lift-groups-min', cp.lift.groups.min);
+    put('lift-groups-max', cp.lift.groups.max);
+
+    // Textzeilen darunter
+    put('drag-single-min-text', cp.drag.single.min);
+    put('drag-single-max-text', cp.drag.single.max);
+    put('drag-groups-min-text', cp.drag.groups.min);
+    put('drag-groups-max-text', cp.drag.groups.max);
+    put('lift-single-min-text', cp.lift.single.min);
+    put('lift-single-max-text', cp.lift.single.max);
+    put('lift-groups-min-text', cp.lift.groups.min);
+    put('lift-groups-max-text', cp.lift.groups.max);
+  }
+
+  // --- Hauptberechnung + Tabellen ---
+  function computeAndFill(){
+    if (!window.Calc || typeof Calc.compute!=='function') {
+      console.error('Calc.compute fehlt – prüfe public/calc.browser.js');
+      return;
+    }
+    const input = {
+      orientation:  $('orientation').value,
+      stone:        $('stone').value,
+      windZone:     $('windZone').value,
+      terrain:      parseInt($('terrain').value,10),
+      height:       Math.max(0.1, num($('height').value)),
+      moduleH:      Math.max(0.1, num($('moduleH').value)),
+      moduleW:      Math.max(0.1, num($('moduleW').value)),
+      moduleWeight: Math.max(0,   num($('moduleWeight').value)),
+      roofType:     $('roofType')?.value || null,
+      d1:           num($('d1')?.value) || null
+    };
+    const res = Calc.compute(input);
+
+    // Testgruppen-Tabelle
+    const tbody = $('tbody'); if (tbody) tbody.innerHTML = '';
+    (res.groups || []).forEach(g=>{
+      const kClass = g.K < 0 ? 'k-neg' : 'k-pos';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${g.group}</td><td>${ri(g.J)}</td><td><span class="kchip ${kClass}">${ri(g.K)}</span></td>`;
+      tbody.appendChild(tr);
+    });
+
+    // Meldung
+    const msgHost = $('table-message');
+    if (msgHost){
+      msgHost.innerHTML = res.allNegative
+        ? `<div style="margin-top:10px;"><div style="color:#1ec41e;font-weight:bold;">Die aktuell gewählte Ballastierung ist ausreichend.</div><div style="color:#222; margin-top:12px;"><strong>Beschluss:</strong> Gemäß W15611-2E-RA-001 (Peutz) erfüllt.</div></div>`
+        : (res.maxPositiveK!=null
+            ? `<div style="margin-top:10px;"><div style="color:#ff3c3c;font-weight:bold;">Zusätzliche Last pro Modul: <b>${ri(res.maxPositiveK)} kg</b>.</div><div style="color:#222; margin-top:12px;">Bitte Ballastierung anpassen.</div></div>`
+            : '');
+    }
+
+    // Input/Output (Site)
+    const area = res.moduleArea ?? (input.moduleH*input.moduleW);
+    const vb0  = res.vb0 ?? null;
+    const qp50 = res.qp_char ?? null;
+
+    const stones = (window.WATTSTONE_DATA?.STONES)||{};
+    const baseStone = stones[input.stone]?.base ?? 0;
+    const combBallast = 1.5*baseStone + input.moduleWeight + (res.deflectorUsed||0);
+
+    setAll('site-wattstone',  $('stone').selectedOptions[0].text);
+    setAll('site-deflector',  (res.deflectorUsed>0) ? `${ri(res.deflectorUsed)} kg (aktiv)` : '–');
+    setAll('site-orient',     $('orientation').selectedOptions[0].text);
+    setAll('site-z',          Number(input.height).toLocaleString('de-DE',{maximumFractionDigits:1}));
+    setAll('site-d1',         input.d1!=null ? Number(input.d1).toLocaleString('de-DE',{maximumFractionDigits:1}) : '—');
+    setAll('site-windzone',   $('windZone').selectedOptions[0].text);
+    setAll('site-terrain',    $('terrain').selectedOptions[0].text);
+    setAll('site-period',     '25');
+    setAll('site-yfq',        '1,35');
+    setAll('site-yg',         '1,0');
+    setAll('site-area',       Number(area).toLocaleString('de-DE',{maximumFractionDigits:2}));
+    setAll('site-modw',       Number(input.moduleWeight).toLocaleString('de-DE',{maximumFractionDigits:1}));
+    setAll('site-ballast',    Number(combBallast).toLocaleString('de-DE',{maximumFractionDigits:1}));
+
+    // Dachhaut/μ
+    const RT = (window.WATTSTONE_DATA?.ROOF_TYPES||{})[input.roofType] || {};
+    const mu = (RT.mu!=null && RT.mu!=='') ? RT.mu : '';
+    setAll('site-rooftype', $('roofType').selectedOptions[0].text);
+    setAll('site-roofmu',   mu!=='' ? Number(mu).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—');
+
+    // Output
+    setAll('site-vb0',   vb0!=null ? Number(vb0).toLocaleString('de-DE',{maximumFractionDigits:2}) : '—');
+    setAll('site-qp50',  qp50!=null ? Number(qp50).toLocaleString('de-DE',{maximumFractionDigits:1}) : '—');
+    setAll('site-qpref', qp50!=null ? Number(qp50).toLocaleString('de-DE',{maximumFractionDigits:1}) : '—');
+
+    // CP
+    fillCp(input.orientation);
+  }
+
+  // --- Events & Boot ---
+  function bind(){
+    ['orientation','Ausrichtung','stone','moduleH','moduleW','moduleWeight','windZone','terrain','height','roofType','d1']
+    .forEach(id=>{
+      const el=$(id); if (!el) return;
+      el.addEventListener('input',  ()=>{ computeAndFill(); updateFigures(); });
+      el.addEventListener('change', ()=>{ computeAndFill(); updateFigures(); });
+    });
+
+    computeAndFill();
+    updateFigures();
+  }
+
+  if (document.readyState==='loading') document.addEventListener('DOMContentLoaded', bind);
+  else bind();
+})();
+</script>
+
+
+</body>
+</html>
